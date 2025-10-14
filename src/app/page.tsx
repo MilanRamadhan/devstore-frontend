@@ -1,103 +1,183 @@
-import Image from "next/image";
+import Link from "next/link";
+import ProductCard from "@/components/product-card";
+import { PRODUCTS } from "@/lib/mock";
+import { Lock, ShieldCheck, Star, Puzzle, Rocket, FlaskConical } from "lucide-react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const featured = PRODUCTS.slice(0, 2);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  return (
+    <div className="relative -mx-4 px-4 md:mx-0 md:px-0">
+      {/* ====== LIQUID BACKGROUND LAYER ====== */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        {/* soft gradient base */}
+        <div className="absolute inset-0 bg-[radial-gradient(60%_60%_at_10%_0%,#ffffff_0%,#f7f7f7_40%,#f2f2f2_100%)]" />
+        {/* blobs */}
+        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-gradient-to-br from-indigo-300/40 to-sky-300/30 blur-3xl" />
+        <div className="absolute -right-20 top-32 h-80 w-80 rounded-full bg-gradient-to-br from-rose-300/40 to-amber-200/30 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-gradient-to-br from-emerald-300/30 to-teal-200/30 blur-3xl" />
+        {/* noise overlay halus */}
+        <div
+          className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "url('data:image/svg+xml;utf8,\
+<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22>\
+<filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%222%22 stitchTiles=%22stitch%22/></filter>\
+<rect width=%2248%22 height=%2248%22 filter=%22url(%23n)%22 opacity=%220.35%22/></svg>')",
+          }}
+        />
+      </div>
+
+      <div className="space-y-20">
+        {/* ====== HERO ====== */}
+        <section className="grid items-center gap-10 md:grid-cols-2">
+          <div className="space-y-6">
+            <GlassBadge className="inline-flex">
+              <span className="inline-flex items-center gap-1">
+                <Lock className="h-3.5 w-3.5" /> Escrow & Milestone
+              </span>
+              <span className="mx-2 h-1 w-1 rounded-full bg-neutral-300/70" />
+              <span className="inline-flex items-center gap-1">
+                <ShieldCheck className="h-3.5 w-3.5" /> Add-on transparan
+              </span>
+            </GlassBadge>
+
+            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+              Bangun lebih cepat. <span className="text-neutral-500">Tanpa drama.</span>
+            </h1>
+            <p className="max-w-xl text-neutral-600">Pilih template, centang add-on, cek total otomatis. Pembayaran aman pakai escrow, rilis bertahap per milestone. Semua serba jelas, tinggal gas.</p>
+
+            <div className="flex flex-wrap gap-3">
+              <Link href="/products" className="btn btn-black rounded-xl px-5 py-3">
+                Lihat Katalog
+              </Link>
+              <a href="#fitur" className="btn btn-outline rounded-xl px-5 py-3">
+                Lihat Fitur
+              </a>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-6 pt-2 text-sm text-neutral-600">
+              <span className="inline-flex items-center gap-2">
+                <Star className="h-4 w-4" /> Review terverifikasi
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <Puzzle className="h-4 w-4" /> Add-on fleksibel
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <Rocket className="h-4 w-4" /> Siap deploy
+              </span>
+            </div>
+          </div>
+
+          {/* mock visual dalam glass card */}
+          <GlassCard className="relative h-64 w-full md:h-[420px] p-4">
+            <div className="h-8 w-28 rounded-full bg-white/50" />
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
+              <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
+              <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
+            </div>
+            <div className="mt-6 h-10 w-40 rounded-xl bg-black/90" />
+            {/* kecilin glass ring di pinggir sebagai aksen */}
+            <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-black/5" />
+          </GlassCard>
+        </section>
+
+        {/* ====== FITUR ====== */}
+        <section id="fitur" className="space-y-6">
+          <h2 className="text-2xl font-semibold tracking-tight">Kenapa DevStore?</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <GlassCard className="p-5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition">
+              <FeatureItem icon={<Puzzle className="h-5 w-5 text-neutral-700" />} title="Add-on Transparan" desc="Branding, payment, deploy, i18n—tinggal centang. Harga & SLA langsung ke-update." />
+            </GlassCard>
+            <GlassCard className="p-5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition">
+              <FeatureItem icon={<Lock className="h-5 w-5 text-neutral-700" />} title="Escrow & Milestone" desc="Bayar aman. Dana dirilis bertahap setelah kamu approve tiap milestone." />
+            </GlassCard>
+            <GlassCard className="p-5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition">
+              <FeatureItem icon={<FlaskConical className="h-5 w-5 text-neutral-700" />} title="Live Demo & Review" desc="Lihat demo dulu, baca review terverifikasi, cek changelog sebelum beli." />
+            </GlassCard>
+          </div>
+        </section>
+
+        {/* ====== TRENDING ====== */}
+        <section className="space-y-6">
+          <div className="flex items-end justify-between">
+            <h2 className="text-2xl font-semibold tracking-tight">Lagi trending</h2>
+            <Link href="/products" className="text-sm text-neutral-600 hover:underline">
+              Lihat semua →
+            </Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((p) => (
+              <ProductCard key={p.id} p={p} />
+            ))}
+            {/* CTA */}
+            <GlassCard className="hidden p-6 sm:block">
+              <div className="text-sm text-neutral-700">Butuh kustom lain?</div>
+              <div className="mt-2 text-lg font-semibold">Request add-on spesifik</div>
+              <p className="mt-2 text-sm text-neutral-600">Kirim kebutuhanmu, seller kami siap bantu.</p>
+              <Link href="/products" className="mt-4 inline-flex rounded-xl border border-white/60 bg-white/60 px-4 py-2 text-sm hover:bg-white/80">
+                Jelajahi dulu
+              </Link>
+            </GlassCard>
+          </div>
+        </section>
+
+        {/* ====== STATS / TRUST ====== */}
+        <GlassCard className="p-6 md:p-8">
+          <div className="grid gap-6 text-center sm:grid-cols-3">
+            <Stat number="4.8/5" label="Rata-rata rating" />
+            <Stat number="100+" label="Template siap pakai" />
+            <Stat number="3–7 hari" label="Rata-rata delivery" />
+          </div>
+        </GlassCard>
+
+        {/* ====== CTA BAWAH ====== */}
+        <GlassCard className="p-8 text-center">
+          <h3 className="text-2xl font-semibold tracking-tight">Siap mulai cepat tanpa nyusun dari nol?</h3>
+          <p className="mx-auto mt-3 max-w-2xl text-neutral-700">Pilih template, centang add-on, dan biarkan kami handle sisanya. Kamu fokus ke launching.</p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Link href="/products" className="btn btn-black rounded-xl px-5 py-3">
+              Mulai dari katalog
+            </Link>
+            <a href="#fitur" className="btn btn-outline rounded-xl px-5 py-3">
+              Lihat fitur
+            </a>
+          </div>
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+/* ====== helper components (scoped) ====== */
+
+function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={"rounded-2xl border border-white/50 bg-white/40 backdrop-blur-xl ring-1 ring-black/5 " + className}>{children}</div>;
+}
+
+function GlassBadge({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={"rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs text-neutral-700 backdrop-blur-xl shadow-sm ring-1 ring-black/5 " + className}>{children}</div>;
+}
+
+function FeatureItem({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/60">{icon}</div>
+      <div className="space-y-1">
+        <div className="font-medium">{title}</div>
+        <p className="text-sm text-neutral-700">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ number, label }: { number: string; label: string }) {
+  return (
+    <div className="space-y-1">
+      <div className="text-3xl font-semibold">{number}</div>
+      <div className="text-sm text-neutral-700">{label}</div>
     </div>
   );
 }
