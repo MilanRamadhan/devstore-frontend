@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProductCard from "@/components/product-card";
 import { PRODUCTS } from "@/lib/mock";
-import { Search, X, Sparkles } from "lucide-react";
+import { Search, X, Sparkles, ChevronDown } from "lucide-react";
 
 type SortKey = "relevance" | "price-asc" | "price-desc" | "rating-desc";
 
@@ -12,12 +12,10 @@ export default function ProductsPage() {
   const router = useRouter();
   const sp = useSearchParams();
 
-  // ——— state minimal (shareable via URL)
   const [q, setQ] = useState(sp.get("q") ?? "");
   const [stacks, setStacks] = useState<string[]>(sp.get("stack") ? sp.get("stack")!.split(",") : []);
   const [sort, setSort] = useState<SortKey>((sp.get("sort") as SortKey) ?? "relevance");
 
-  // ——— facet stack (ambil 8 paling sering dipakai)
   const topStacks = useMemo(() => {
     const freq = new Map<string, number>();
     for (const p of PRODUCTS) {
@@ -31,7 +29,6 @@ export default function ProductsPage() {
       .map(([name]) => name);
   }, []);
 
-  // ——— sync ke URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
@@ -41,7 +38,6 @@ export default function ProductsPage() {
     router.replace(qs ? `/products?${qs}` : `/products`);
   }, [q, stacks, sort, router]);
 
-  // ——— apply filter + sort (simple)
   const filtered = useMemo(() => {
     let rows = PRODUCTS.slice();
 
@@ -64,9 +60,7 @@ export default function ProductsPage() {
       case "rating-desc":
         rows.sort((a, b) => (b.ratingAvg ?? 0) - (a.ratingAvg ?? 0));
         break;
-      case "relevance":
       default:
-        // biarkan urutan asli sebagai "relevansi" sederhana
         break;
     }
     return rows;
@@ -76,7 +70,6 @@ export default function ProductsPage() {
   const active = q || stacks.length;
 
   const toggleStack = (s: string) => setStacks((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
-
   const clearAll = () => {
     setQ("");
     setStacks([]);
@@ -101,7 +94,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Filter bar — simple & glassy */}
+      {/* Filter bar */}
       <GlassCard className="p-3 md:p-4">
         <div className="grid gap-3 md:grid-cols-3">
           {/* Search */}
@@ -125,7 +118,7 @@ export default function ProductsPage() {
           />
         </div>
 
-        {/* Stack chips (top 8) */}
+        {/* Stack chips */}
         <div className="mt-3">
           <FilterGroup title="Stack populer">
             <div className="flex flex-wrap gap-2">
@@ -138,7 +131,7 @@ export default function ProductsPage() {
           </FilterGroup>
         </div>
 
-        {/* Active chips summary (optional) */}
+        {/* Active summary */}
         {stacks.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-xs text-neutral-500">Aktif:</span>
@@ -151,7 +144,7 @@ export default function ProductsPage() {
         )}
       </GlassCard>
 
-      {/* List */}
+      {/* Product list */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((p) => (
           <ProductCard key={p.id} p={p} />
@@ -162,7 +155,7 @@ export default function ProductsPage() {
   );
 }
 
-/* ===== helpers (scoped) ===== */
+/* ===== Helpers ===== */
 
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -190,24 +183,77 @@ function Chip({ active, children, onClick }: { active?: boolean; children: React
   return (
     <button
       onClick={onClick}
-      className={["rounded-full px-3 py-1.5 text-sm transition", active ? "bg-white/80 text-neutral-900 ring-1 ring-black/5" : "border border-white/60 bg-white/60 text-neutral-700 ring-1 ring-black/5 hover:bg-white/75"].join(" ")}
+      className={`rounded-full px-3 py-1.5 text-sm transition ${active ? "bg-white/80 text-neutral-900 ring-1 ring-black/5" : "border border-white/60 bg-white/60 text-neutral-700 ring-1 ring-black/5 hover:bg-white/75"}`}
     >
       {children}
     </button>
   );
 }
 
+/* ===== Custom Glass Dropdown (no blue highlight) ===== */
+
+/* ===== Custom Glass Dropdown (hover minimalis, tanpa biru) ===== */
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const selected = options.find((o) => o.value === value) ?? options[0];
+
+  // klik di luar untuk tutup
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!btnRef.current || !listRef.current) return;
+      if (btnRef.current.contains(e.target as Node)) return;
+      if (listRef.current.contains(e.target as Node)) return;
+      setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="hidden text-xs text-neutral-500 md:inline">Urutkan</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm ring-1 ring-black/5">
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+    <div className="relative">
+      {/* tombol utama */}
+      <button
+        ref={btnRef}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-left text-sm text-neutral-900
+                   backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.04)] hover:bg-white/80 focus:outline-none focus:ring-1 focus:ring-black/10 transition"
+      >
+        <span className="truncate">{selected?.label}</span>
+        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {/* daftar opsi */}
+      {open && (
+        <ul
+          ref={listRef}
+          role="listbox"
+          className="absolute z-40 mt-2 w-full overflow-hidden rounded-2xl border border-white/60 bg-white/80 backdrop-blur-2xl ring-1 ring-black/5
+                     shadow-[0_12px_40px_rgba(0,0,0,0.08)] animate-fadeIn"
+        >
+          {options.map((o) => {
+            const active = o.value === value;
+            return (
+              <li
+                key={o.value}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                }}
+                className={`cursor-pointer px-4 py-2.5 text-sm transition-colors duration-150 
+                  ${active ? "bg-white/90 font-medium text-neutral-900" : "text-neutral-700 hover:bg-black/30 hover:text-neutral-900"}`}
+              >
+                {o.label}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
