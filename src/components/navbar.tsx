@@ -31,18 +31,29 @@ export default function Navbar() {
                 <Link
                   key={n.href}
                   href={n.href}
-                  className={["px-3 py-1.5 rounded-full text-sm transition", active ? "bg-white/80 text-neutral-900 ring-1 ring-black/5" : "text-neutral-700 hover:bg-white/60 hover:text-neutral-900"].join(" ")}
+                  className={["px-3 py-1.5 rounded-full text-sm transition duration-300", active ? "bg-black/90 hover: text-white/90 ring-1 ring-black/5" : "text-neutral-700 hover:bg-black/90 hover:text-white/90"].join(" ")}
                 >
                   {n.label}
                 </Link>
               );
             })}
 
-            <Link href="/cart" className="relative ml-2 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-neutral-700 hover:bg-white/60 hover:text-neutral-900 transition">
-              <ShoppingCart className="h-4 w-4" />
-              <span>Cart</span>
-              <span className="absolute -right-1 -top-1 rounded-full bg-black px-1 text-[10px] leading-4 text-white">{items}</span>
-            </Link>
+            {(() => {
+              const active = pathname === "/cart" || pathname?.startsWith("/cart/");
+              return (
+                <Link
+                  href="/cart"
+                  className={[
+                    "relative ml-2 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm transition duration-300",
+                    active ? "bg-white/80 text-neutral-900 ring-1 ring-black/5" : "text-neutral-700 hover:bg-black/90 hover:text-white/90",
+                  ].join(" ")}
+                >
+                  <ShoppingCart className={`h-4 w-4 transition-transform duration-300 ${active ? "scale-105" : "group-hover:scale-105"}`} />
+                  <span>Cart</span>
+                  <span className="absolute -right-1 -top-1 rounded-full bg-black px-1 text-[10px] leading-4 text-white">{items}</span>
+                </Link>
+              );
+            })()}
           </nav>
 
           {/* Mobile toggle */}

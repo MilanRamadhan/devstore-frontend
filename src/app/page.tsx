@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ProductCard from "@/components/product-card";
 import { PRODUCTS } from "@/lib/mock";
-import { Lock, ShieldCheck, Star, Puzzle, Rocket, FlaskConical } from "lucide-react";
+import { Lock, ShieldCheck, Star, Puzzle, Rocket, FlaskConical, Store, Sparkles } from "lucide-react";
 
 export default function Home() {
   const featured = PRODUCTS.slice(0, 2);
@@ -48,12 +48,23 @@ export default function Home() {
             </h1>
             <p className="max-w-xl text-neutral-600">Pilih template, centang add-on, cek total otomatis. Pembayaran aman pakai escrow, rilis bertahap per milestone. Semua serba jelas, tinggal gas.</p>
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/products" className="btn btn-black rounded-xl px-5 py-3">
-                Lihat Katalog
+            <div className="grid gap-4 sm:grid-cols-2 md:max-w-md">
+              {/* tombol 1: Lihat Katalog */}
+              <Link
+                href="/products"
+                className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/60 px-5 py-3 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+              >
+                <span className="relative z-10 flex items-center gap-2">Lihat Katalog</span>
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
               </Link>
-              <a href="#fitur" className="btn btn-outline rounded-xl px-5 py-3">
-                Lihat Fitur
+
+              {/* tombol 2: Lihat Fitur */}
+              <a
+                href="#fitur"
+                className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/60 px-5 py-3 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+              >
+                <span className="relative z-10 flex items-center gap-2">Lihat Fitur</span>
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
               </a>
             </div>
 
@@ -137,12 +148,23 @@ export default function Home() {
         <GlassCard className="p-8 text-center">
           <h3 className="text-2xl font-semibold tracking-tight">Siap mulai cepat tanpa nyusun dari nol?</h3>
           <p className="mx-auto mt-3 max-w-2xl text-neutral-700">Pilih template, centang add-on, dan biarkan kami handle sisanya. Kamu fokus ke launching.</p>
-          <div className="mt-6 flex justify-center gap-3">
-            <Link href="/products" className="btn btn-black rounded-xl px-5 py-3">
-              Mulai dari katalog
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 md:max-w-md mx-auto">
+            {/* Primary (Katalog) */}
+            <Link
+              href="/products"
+              className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/70 px-5 py-3 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]"
+            >
+              <span className="relative z-10">Mulai dari katalog</span>
+              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
             </Link>
-            <a href="#fitur" className="btn btn-outline rounded-xl px-5 py-3">
-              Lihat fitur
+
+            {/* Secondary (Fitur) */}
+            <a
+              href="#fitur"
+              className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/50 px-5 py-3 text-sm font-medium text-neutral-700 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/65 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]"
+            >
+              <span className="relative z-10">Lihat fitur</span>
+              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
             </a>
           </div>
         </GlassCard>
