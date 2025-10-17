@@ -1,10 +1,20 @@
+"use client";
+
 import Link from "next/link";
 import ProductCard from "@/components/product-card";
 import { PRODUCTS } from "@/lib/mock";
 import { Lock, ShieldCheck, Star, Puzzle, Rocket, FlaskConical, Store, Sparkles } from "lucide-react";
+import { useEffect } from "react";
+import "aos/dist/aos.css";
 
 export default function Home() {
   const featured = PRODUCTS.slice(0, 2);
+  useEffect(() => {
+    // AOS (Animate On Scroll) initialization
+    import("aos").then((AOS) => {
+      AOS.init();
+    });
+  }, []);
 
   return (
     <div className="relative -mx-4 px-4 md:mx-0 md:px-0">
@@ -43,7 +53,7 @@ export default function Home() {
               </span>
             </GlassBadge>
 
-            <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+            <h1 data-aos="fade-right" data-aos-duration="1000" className="text-4xl font-semibold tracking-tight md:text-5xl">
               Bangun lebih cepat. <span className="text-neutral-500">Tanpa drama.</span>
             </h1>
             <p className="max-w-xl text-neutral-600">Pilih template, centang add-on, cek total otomatis. Pembayaran aman pakai escrow, rilis bertahap per milestone. Semua serba jelas, tinggal gas.</p>
@@ -82,17 +92,19 @@ export default function Home() {
           </div>
 
           {/* mock visual dalam glass card */}
-          <GlassCard className="relative h-64 w-full md:h-[420px] p-4">
-            <div className="h-8 w-28 rounded-full bg-white/50" />
-            <div className="mt-6 grid grid-cols-3 gap-3">
-              <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
-              <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
-              <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
-            </div>
-            <div className="mt-6 h-10 w-40 rounded-xl bg-black/90" />
-            {/* kecilin glass ring di pinggir sebagai aksen */}
-            <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-black/5" />
-          </GlassCard>
+          <div data-aos="fade-left" data-aos-duration="1000">
+            <GlassCard className="relative h-64 w-full md:h-[420px] p-4">
+              <div className="h-8 w-28 rounded-full bg-white/50" />
+              <div className="mt-6 grid grid-cols-3 gap-3">
+                <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
+                <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
+                <div className="h-24 rounded-xl border border-white/50 bg-white/60" />
+              </div>
+              <div className="mt-6 h-10 w-40 rounded-xl bg-black/90" />
+              {/* kecilin glass ring di pinggir sebagai aksen */}
+              <div className="pointer-events-none absolute inset-0 rounded-[20px] ring-1 ring-black/5" />
+            </GlassCard>
+          </div>
         </section>
 
         {/* ====== FITUR ====== */}

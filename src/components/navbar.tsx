@@ -16,7 +16,7 @@ export default function Navbar() {
   const items = useCart((s) => s.totals().items);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/60 bg-white/60 backdrop-blur-xl ring-1 ring-black/5">
+    <header className="sticky top-0 z-50 border-b bg-white/80 supports-[backdrop-filter]:bg-white/70 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex h-14 items-center justify-between">
           <Link href="/" className="font-semibold text-lg tracking-tight">

@@ -1,0 +1,100 @@
+// src/app/(auth)/login/page.tsx
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useAuth } from "@/store/auth";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const next = sp.get("next") ?? "/";
+  const { login, hydrate } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState("");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErr("");
+    // MOCK: validasi minimal
+    if (!email.includes("@") || pass.length < 4) {
+      setErr("Email/password tidak valid.");
+      return;
+    }
+    // login mock
+    login({
+      id: crypto.randomUUID(),
+      name: email.split("@")[0],
+      email,
+    });
+    hydrate();
+    router.replace(next);
+  }
+
+  return (
+    <AuthShell title="Masuk ke DevStore" subtitle="Akses katalog, add-on, dan milestone dengan aman.">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Email">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="kamu@email.com"
+            className="w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm outline-none ring-1 ring-black/5 placeholder:text-neutral-400 focus:bg-white/90"
+          />
+        </Field>
+        <Field label="Password">
+          <input
+            type="password"
+            value={pass}
+            onChange={(e) => setPass(e.target.value)}
+            placeholder="••••••••"
+            className="w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm outline-none ring-1 ring-black/5 placeholder:text-neutral-400 focus:bg-white/90"
+          />
+        </Field>
+
+        {err && <p className="text-sm text-red-600">{err}</p>}
+
+        <button type="submit" className="w-full rounded-2xl bg-black px-4 py-2.5 text-white transition hover:bg-neutral-900">
+          Masuk
+        </button>
+
+        <p className="text-center text-sm text-neutral-600">
+          Belum punya akun?{" "}
+          <Link href="/register" className="underline">
+            Daftar sekarang
+          </Link>
+        </p>
+      </form>
+    </AuthShell>
+  );
+}
+
+/* --- small components --- */
+function AuthShell({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <div className="min-h-dvh flex flex-col">
+      <main className="mx-auto max-w-6xl px-4 py-10 flex-1">
+        <div className="mx-auto max-w-md">
+          <div className="rounded-2xl border border-white/60 bg-white/60 p-6 md:p-8 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)]">
+            <h1 className="text-2xl font-semibold">{title}</h1>
+            {subtitle && <p className="mt-1 text-sm text-neutral-700">{subtitle}</p>}
+            <div className="mt-6">{children}</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1">
+      <span className="text-sm text-neutral-700">{label}</span>
+      {children}
+    </label>
+  );
+}
