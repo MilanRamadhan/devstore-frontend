@@ -95,7 +95,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Filter bar */}
-      <GlassCard className="p-3 md:p-4">
+      <GlassCard className="w-full p-3 md:p-4">
         <div className="grid gap-3 md:grid-cols-3">
           {/* Search */}
           <div className="md:col-span-2">
@@ -189,8 +189,6 @@ function Chip({ active, children, onClick }: { active?: boolean; children: React
     </button>
   );
 }
-
-/* ===== Custom Glass Dropdown (no blue highlight) ===== */
 
 /* ===== Custom Glass Dropdown (hover minimalis, tanpa biru) ===== */
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {

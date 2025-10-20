@@ -127,10 +127,15 @@ export default function Home() {
         <section className="space-y-6">
           <div className="flex items-end justify-between">
             <h2 className="text-2xl font-semibold tracking-tight">Lagi trending</h2>
-            <Link href="/products" className="text-sm text-neutral-600 hover:underline">
-              Lihat semua →
+            <Link
+              href="/products"
+              className="group relative inline-flex items-center justify-center rounded-2xl border border-white/60 bg-white/60 px-4 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]"
+            >
+              <span className="relative z-10">Lihat semua</span>
+              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
             </Link>
           </div>
+
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((p) => (
               <ProductCard key={p.id} p={p} />
