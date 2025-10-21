@@ -13,6 +13,7 @@ export type Product = {
   category: "Web" | "App" | "Game";
   stack: string[];
   cover: string;
+  cover_url?: string; // URL foto produk dari upload
   basePrice: number; // rupiah
   baseSlaDays?: number;
   ratingAvg?: number;

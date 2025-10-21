@@ -9,25 +9,29 @@ function GlassCard({ children, className = "" }: { children: React.ReactNode; cl
 }
 
 export default function ProductCard({ p }: { p: Product }) {
+  const price = typeof (p as any).base_price === "number" ? (p as any).base_price : p.basePrice ?? 0;
+  const coverUrl = (p as any).cover_url || p.cover_url;
+
   return (
     <Link href={`/products/${p.slug}`} className="block transition-transform hover:scale-[1.01]">
       <GlassCard className="p-4 relative overflow-hidden">
-        {/* cover (sementara placeholder) */}
-        <div className="h-40 rounded-xl mb-3 border border-white/50 bg-white/50 flex items-center justify-center text-gray-400">cover</div>
+        {/* cover image */}
+        <div className="h-40 rounded-xl mb-3 border border-white/50 bg-white/50 flex items-center justify-center text-gray-400 overflow-hidden">
+          {coverUrl ? <img src={coverUrl} alt={p.title} className="h-full w-full object-cover" /> : <span className="text-sm">No Image</span>}
+        </div>
 
         <h3 className="font-semibold text-neutral-900">{p.title}</h3>
-        <div className="text-sm text-neutral-600">{p.stack.join(" • ")}</div>
+        <div className="text-sm text-neutral-600">{p.stack?.join(" • ")}</div>
 
         <div className="mt-2 flex items-center justify-between">
           <span className="text-sm text-neutral-700">Mulai</span>
-          <span className="font-semibold text-neutral-900">{formatIDR(p.basePrice)}</span>
+          <span className="font-semibold text-neutral-900">{formatIDR(price)}</span>
         </div>
 
         <div className="mt-2">
           <RatingStars value={p.ratingAvg ?? 0} count={p.ratingCount ?? 0} />
         </div>
 
-        {/* subtle ring accent */}
         <div className="pointer-events-none absolute inset-0 rounded-[16px] ring-1 ring-black/5" />
       </GlassCard>
     </Link>

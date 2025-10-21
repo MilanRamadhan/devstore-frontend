@@ -4,6 +4,8 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProductCard from "@/components/product-card";
 import { PRODUCTS } from "@/lib/mock";
+import { Product } from "@/lib/types";
+import { productService } from "@/lib/services/products";
 import { Search, X, Sparkles, ChevronDown } from "lucide-react";
 
 type SortKey = "relevance" | "price-asc" | "price-desc" | "rating-desc";
@@ -15,10 +17,30 @@ export default function ProductsPage() {
   const [q, setQ] = useState(sp.get("q") ?? "");
   const [stacks, setStacks] = useState<string[]>(sp.get("stack") ? sp.get("stack")!.split(",") : []);
   const [sort, setSort] = useState<SortKey>((sp.get("sort") as SortKey) ?? "relevance");
+  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch products from backend on mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoading(true);
+      const result = await productService.getProducts();
+      setIsLoading(false);
+
+      if (result.ok && result.products) {
+        setProducts(result.products);
+      } else {
+        // Fallback to mock data if backend fails
+        setProducts(PRODUCTS);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const topStacks = useMemo(() => {
     const freq = new Map<string, number>();
-    for (const p of PRODUCTS) {
+    for (const p of products) {
       for (const s of p.stack ?? []) {
         freq.set(s, (freq.get(s) ?? 0) + 1);
       }
@@ -27,7 +49,7 @@ export default function ProductsPage() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([name]) => name);
-  }, []);
+  }, [products]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -39,7 +61,7 @@ export default function ProductsPage() {
   }, [q, stacks, sort, router]);
 
   const filtered = useMemo(() => {
-    let rows = PRODUCTS.slice();
+    let rows = products.slice();
 
     if (q.trim()) {
       const term = q.toLowerCase();
@@ -64,7 +86,7 @@ export default function ProductsPage() {
         break;
     }
     return rows;
-  }, [q, stacks, sort]);
+  }, [q, stacks, sort, products]);
 
   const total = filtered.length;
   const active = q || stacks.length;
@@ -145,12 +167,18 @@ export default function ProductsPage() {
       </GlassCard>
 
       {/* Product list */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((p) => (
-          <ProductCard key={p.id} p={p} />
-        ))}
-        {!filtered.length && <GlassCard className="p-6 text-center text-sm text-neutral-700">Nggak ada hasil cocok. Coba kurangi filter-nya.</GlassCard>}
-      </div>
+      {isLoading ? (
+        <GlassCard className="p-8 text-center">
+          <p className="text-sm text-neutral-600">Memuat produk...</p>
+        </GlassCard>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((p) => (
+            <ProductCard key={p.id} p={p} />
+          ))}
+          {!filtered.length && <GlassCard className="p-6 text-center text-sm text-neutral-700">Nggak ada hasil cocok. Coba kurangi filter-nya.</GlassCard>}
+        </div>
+      )}
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function CartLine({ productId }: { productId: string }) {
       <div className="h-16 w-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">img</div>
       <div className="flex-1">
         <div className="font-medium">{line.product.title}</div>
-        <div className="text-sm text-gray-600">{line.product.stack.join(" • ")}</div>
+        <div className="text-sm text-gray-600">{(line.product.stack || []).join(" • ")}</div>
         <div className="text-xs mt-1 text-gray-500">Add-on: {line.selectedAddOnIds.length || 0}</div>
         <div className="mt-2 flex gap-2 items-center">
           <input type="number" className="w-16 border rounded-md px-2 py-1" value={line.quantity} min={1} onChange={(e) => setQty(line.product.id, Number(e.target.value))} />

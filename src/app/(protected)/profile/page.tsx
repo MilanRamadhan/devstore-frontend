@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/store/auth";
-import { LogOut, User2, Mail, Globe, ShieldCheck, Bell, CreditCard, Download, FileText, Lock, Check, X, Pencil } from "lucide-react";
+import { profileService, Profile, BecomeSellerRequest } from "@/lib/services/profile";
+import { useRouter } from "next/navigation";
+import { LogOut, User2, Mail, Globe, ShieldCheck, Bell, CreditCard, Download, FileText, Lock, Check, X, Pencil, Store, CheckCircle } from "lucide-react";
 
 /* ================== Page ================== */
 
@@ -10,9 +12,15 @@ type Session = { id: string; device: string; location: string; lastActive: strin
 type Purchase = { id: string; item: string; date: string; total: string; status: "completed" | "refunded" };
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const router = useRouter();
+  const { user, logout, hydrate } = useAuth();
 
-  // --- mock state (ganti ke API nanti)
+  // State for profile data
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // --- form state
   const [displayName, setDisplayName] = useState(user?.name ?? "");
   const [email] = useState(user?.email ?? "");
   const [bio, setBio] = useState("");
@@ -27,6 +35,16 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Modal state for "Jadi Seller"
+  const [showBecomeSellerModal, setShowBecomeSellerModal] = useState(false);
+  const [becomingSellerLoading, setBecomingSellerLoading] = useState(false);
+  const [sellerFormData, setSellerFormData] = useState({
+    store_name: "",
+    payout_bank: "",
+    payout_account: "",
+    bio: "",
+  });
+
   // Original values untuk compare
   const [originalData, setOriginalData] = useState({
     displayName: user?.name ?? "",
@@ -37,6 +55,39 @@ export default function ProfilePage() {
     billingEmail: email,
     address: "",
   });
+
+  // Fetch profile from backend on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoadingProfile(true);
+      const result = await profileService.getMyProfile();
+
+      if (result.ok && result.profile) {
+        setProfile(result.profile);
+        // Update form state with fetched data
+        setDisplayName(result.profile.display_name || user?.name || "");
+        setBio(result.profile.bio || "");
+        setWebsite(result.profile.website || "");
+
+        // Update original data
+        setOriginalData({
+          displayName: result.profile.display_name || user?.name || "",
+          bio: result.profile.bio || "",
+          website: result.profile.website || "",
+          company: "",
+          taxId: "",
+          billingEmail: email,
+          address: "",
+        });
+      }
+
+      setIsLoadingProfile(false);
+    };
+
+    if (user) {
+      fetchProfile();
+    }
+  }, [user, email]);
 
   // Check for changes
   React.useEffect(() => {
@@ -70,26 +121,88 @@ export default function ProfilePage() {
 
   function toggleEdit() {
     if (isEditing && hasChanges) {
-      // Simpan perubahan
+      // Simpan perubahan ke backend
+      handleSaveProfile();
+    } else if (!isEditing) {
+      setIsEditing(true);
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+
+    const updateData = {
+      display_name: displayName.trim(),
+      bio: bio.trim(),
+      website: website.trim(),
+    };
+
+    const result = await profileService.updateMyProfile(updateData);
+
+    if (result.ok && result.profile) {
+      // Update original data and local state
       const newData = {
-        displayName,
-        bio,
-        website,
+        displayName: result.profile.display_name || "",
+        bio: result.profile.bio || "",
+        website: result.profile.website || "",
         company,
         taxId,
         billingEmail,
         address,
       };
+
       setOriginalData(newData);
-      alert("Profil disimpan (mock). Sambungkan ke API untuk persist.");
+      setProfile(result.profile);
       setHasChanges(false);
+      setIsEditing(false);
+      alert("Profil berhasil disimpan!");
+    } else {
+      alert("Gagal menyimpan profil: " + (result.message || "Unknown error"));
     }
-    setIsEditing(!isEditing);
-  }
+
+    setIsSaving(false);
+  };
 
   function revokeSession(id: string) {
     alert(`Session ${id} dihapus (mock).`);
   }
+
+  const handleBecomeSeller = async () => {
+    if (!sellerFormData.store_name.trim() || !sellerFormData.payout_bank.trim() || !sellerFormData.payout_account.trim()) {
+      alert("Mohon isi semua field yang wajib!");
+      return;
+    }
+
+    setBecomingSellerLoading(true);
+
+    try {
+      // Gunakan applySeller untuk submit aplikasi (butuh approval admin)
+      const result = await profileService.applySeller({
+        store_name: sellerFormData.store_name.trim(),
+        payout_bank: sellerFormData.payout_bank.trim(),
+        payout_account: sellerFormData.payout_account.trim(),
+        bio: sellerFormData.bio.trim(),
+      });
+
+      if (result.ok) {
+        alert("✅ " + (result.message || "Aplikasi berhasil diajukan! Tunggu persetujuan admin."));
+        setShowBecomeSellerModal(false);
+        // Reset form
+        setSellerFormData({
+          store_name: "",
+          payout_bank: "",
+          payout_account: "",
+          bio: "",
+        });
+      } else {
+        alert("❌ " + (result.message || "Gagal submit aplikasi"));
+      }
+    } catch (e: any) {
+      alert("❌ " + (e.message || "Terjadi kesalahan"));
+    } finally {
+      setBecomingSellerLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -125,17 +238,19 @@ export default function ProfilePage() {
           )}
           <button
             onClick={toggleEdit}
-            disabled={isEditing && !hasChanges}
+            disabled={(isEditing && !hasChanges) || isSaving}
             className={[
               "group relative inline-flex items-center gap-2 justify-center rounded-2xl border border-white/60 px-4 py-2 text-sm font-medium backdrop-blur-xl ring-1 ring-black/5 transition",
-              isEditing && hasChanges
+              isEditing && hasChanges && !isSaving
                 ? "bg-black/90 text-white hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)]"
-                : isEditing && !hasChanges
+                : (isEditing && !hasChanges) || isSaving
                 ? "bg-white/40 text-neutral-400 cursor-not-allowed"
                 : "bg-white/70 text-neutral-900 hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]",
             ].join(" ")}
           >
-            {isEditing ? (
+            {isSaving ? (
+              <>Menyimpan...</>
+            ) : isEditing ? (
               <>
                 <Check className="h-4 w-4" />
                 {hasChanges ? "Simpan perubahan" : "Tidak ada perubahan"}
@@ -215,7 +330,7 @@ export default function ProfilePage() {
                   <Mail className="h-4 w-4 text-neutral-500" />
                   <span className="inline-flex min-h-[40px] items-center rounded-xl border border-white/60 bg-white/60 px-3 text-sm ring-1 ring-black/5 text-neutral-700">{email}</span>
                 </div>
-                <p className="mt-1 text-xs text-neutral-500">Email ini dipakai untuk login & notifikasi.</p>
+                <p className="mt-1 text-xs text-neutral-500">Email ini dipakai untuk login.</p>
               </Field>
 
               {/* Bio singkat */}
@@ -278,6 +393,54 @@ export default function ProfilePage() {
                 <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
               </button>
             </div>
+          </GlassCard>
+
+          {/* Seller Section */}
+          <GlassCard className="p-6">
+            <SectionTitle icon={<Store className="h-4 w-4" />} title="Seller" desc="Kelola akun seller dan toko kamu." />
+
+            {user?.role === "seller" ? (
+              <div className="mt-4">
+                <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-50/60 px-4 py-3 ring-1 ring-emerald-500/10">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <div className="flex-1">
+                    <p className="font-medium text-emerald-900">Seller aktif</p>
+                    <p className="text-sm text-emerald-700">Kamu sudah bisa upload dan jual produk.</p>
+                  </div>
+                  {user?.store_name && <div className="rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-medium text-white">{user.store_name}</div>}
+                </div>
+                <div className="mt-3">
+                  <button
+                    onClick={() => router.push("/seller")}
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/60 px-5 py-2.5 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      <Store className="h-4 w-4" />
+                      Ke Dashboard Seller
+                    </span>
+                    <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <div className="rounded-2xl border border-white/60 bg-white/60 px-4 py-3 ring-1 ring-black/5">
+                  <p className="text-sm text-neutral-700">Kamu belum menjadi seller. Daftar sekarang untuk mulai menjual produk digital!</p>
+                </div>
+                <div className="mt-3">
+                  <button
+                    onClick={() => setShowBecomeSellerModal(true)}
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)]"
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      <Store className="h-4 w-4" />
+                      Jadi Seller
+                    </span>
+                    <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </GlassCard>
 
           {/* Billing */}
@@ -389,6 +552,85 @@ export default function ProfilePage() {
           </GlassCard>
         </div>
       </div>
+
+      {/* Modal: Jadi Seller */}
+      {showBecomeSellerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <GlassCard className="w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/60 ring-1 ring-black/5">
+                  <Store className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Jadi Seller</h2>
+                  <p className="text-sm text-neutral-600">Isi informasi toko dan pembayaran kamu</p>
+                </div>
+              </div>
+              <button onClick={() => setShowBecomeSellerModal(false)} disabled={becomingSellerLoading} className="rounded-xl p-2 hover:bg-white/70 transition">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <Field label="Nama Toko *">
+                <Input value={sellerFormData.store_name} onChange={(e) => setSellerFormData({ ...sellerFormData, store_name: e.target.value })} placeholder="Contoh: DevStore Official" disabled={becomingSellerLoading} />
+                <p className="mt-1 text-xs text-neutral-500">Nama toko yang akan ditampilkan di produk kamu</p>
+              </Field>
+
+              <Field label="Bank Pembayaran *">
+                <Input value={sellerFormData.payout_bank} onChange={(e) => setSellerFormData({ ...sellerFormData, payout_bank: e.target.value })} placeholder="Contoh: BCA, Mandiri, BNI" disabled={becomingSellerLoading} />
+              </Field>
+
+              <Field label="Nomor Rekening *">
+                <Input value={sellerFormData.payout_account} onChange={(e) => setSellerFormData({ ...sellerFormData, payout_account: e.target.value })} placeholder="1234567890" disabled={becomingSellerLoading} />
+              </Field>
+
+              <Field label="Bio Toko (opsional)">
+                <Textarea
+                  rows={3}
+                  value={sellerFormData.bio}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v.length <= 200) setSellerFormData({ ...sellerFormData, bio: v });
+                  }}
+                  placeholder="Cerita singkat tentang toko kamu..."
+                  disabled={becomingSellerLoading}
+                />
+                <div className="mt-1 text-xs text-neutral-500 text-right">{sellerFormData.bio.length}/200</div>
+              </Field>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => setShowBecomeSellerModal(false)}
+                disabled={becomingSellerLoading}
+                className="flex-1 group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="relative z-10">Batal</span>
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+              </button>
+              <button
+                onClick={handleBecomeSeller}
+                disabled={becomingSellerLoading || !sellerFormData.store_name.trim() || !sellerFormData.payout_bank.trim() || !sellerFormData.payout_account.trim()}
+                className="flex-1 group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  {becomingSellerLoading ? (
+                    <>Memproses...</>
+                  ) : (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Daftar Sekarang
+                    </>
+                  )}
+                </span>
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/store/auth";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,23 +16,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
-    // MOCK: validasi minimal
+
+    // Validasi minimal
     if (!email.includes("@") || pass.length < 4) {
       setErr("Email/password tidak valid.");
       return;
     }
-    // login mock
-    login({
-      id: crypto.randomUUID(),
-      name: email.split("@")[0],
-      email,
-    });
-    hydrate();
-    router.replace(next);
+
+    setIsLoading(true);
+    const result = await login(email, pass);
+    setIsLoading(false);
+
+    if (result.ok) {
+      hydrate();
+      router.replace(next);
+    } else {
+      setErr(result.message || "Login gagal. Silakan coba lagi.");
+    }
   }
 
   return (
@@ -58,9 +64,22 @@ export default function LoginPage() {
 
         {err && <p className="text-sm text-red-600">{err}</p>}
 
-        <button type="submit" className="w-full rounded-2xl bg-black px-4 py-2.5 text-white transition hover:bg-neutral-500">
-          Masuk
+        <button type="submit" disabled={isLoading} className="w-full rounded-2xl bg-black px-4 py-2.5 text-white transition hover:bg-neutral-500 disabled:opacity-50 disabled:cursor-not-allowed">
+          {isLoading ? "Memproses..." : "Masuk"}
         </button>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-neutral-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white/60 px-2 text-neutral-500">atau</span>
+          </div>
+        </div>
+
+        {/* Google Auth Button */}
+        <GoogleAuthButton mode="login" />
 
         <p className="text-center text-sm text-neutral-600">
           Belum punya akun?{" "}

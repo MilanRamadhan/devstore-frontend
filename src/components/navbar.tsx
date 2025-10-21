@@ -7,7 +7,11 @@ import { useCart } from "@/store/cart";
 import { useAuth } from "@/store/auth";
 import { ShoppingCart, Menu, X, LogOut, User2 } from "lucide-react";
 
-const NAV = [{ href: "/products", label: "Katalog" }];
+const NAV = [
+  { href: "/products", label: "Katalog" },
+  { href: "/orders", label: "Orders" },
+  { href: "/seller", label: "Seller", sellerOnly: true },
+];
 
 export default function Navbar() {
   const router = useRouter();
@@ -41,7 +45,7 @@ export default function Navbar() {
 
           {/* Desktop */}
           <nav className="hidden md:flex items-center gap-2">
-            {NAV.map((n) => {
+            {NAV.filter((n) => !n.sellerOnly || user?.role === "seller").map((n) => {
               const active = pathname === n.href || pathname?.startsWith(n.href + "/");
               return (
                 <Link
@@ -115,7 +119,7 @@ export default function Navbar() {
         {open && (
           <div className="md:hidden pb-3">
             <div className="mt-2 rounded-2xl border border-white/60 bg-white/60 p-2 backdrop-blur-xl ring-1 ring-black/5">
-              {NAV.map((n) => {
+              {NAV.filter((n) => !n.sellerOnly || user?.role === "seller").map((n) => {
                 const active = pathname === n.href || pathname?.startsWith(n.href + "/");
                 return (
                   <Link

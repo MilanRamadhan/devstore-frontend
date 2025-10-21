@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/store/cart";
 import { calcLineSubtotal, checkoutPreview } from "@/lib/pricing";
 import { formatIDR } from "@/lib/format";
+import { orderService } from "@/lib/services/orders";
 import { Clock, ShieldCheck, CreditCard, FileText, ArrowRight, CheckCircle2 } from "lucide-react";
 
 export default function CheckoutPage() {
-  const { lines } = useCart();
+  const router = useRouter();
+  const { lines, clear } = useCart();
 
   if (lines.length === 0) {
     return (
@@ -35,6 +38,8 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [agree, setAgree] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState("");
 
   // mock split milestone: 30/50/20
   const m1 = Math.round(preview.grandTotal * 0.3);
@@ -42,6 +47,66 @@ export default function CheckoutPage() {
   const m3 = preview.grandTotal - m1 - m2;
 
   const canPay = agree && email.trim().length > 3;
+
+  const handleCheckout = async () => {
+    if (!canPay) return;
+
+    setIsProcessing(true);
+    setError("");
+
+    try {
+      // Transform cart lines to backend format
+      const items = lines.map((line) => {
+        const { base, addOnTotal, total } = calcLineSubtotal(line.product, line.selectedAddOnIds);
+
+        // Get addon details
+        const addons = line.selectedAddOnIds.map((addonId) => {
+          const addon = (line.product.addOns || []).find((a) => a.id === addonId);
+          return {
+            addon_id: addonId,
+            price: addon?.price || 0,
+          };
+        });
+
+        return {
+          product_id: line.product.id,
+          quantity: line.quantity,
+          unit_price: total, // price per item including base + addons
+          total: total * line.quantity,
+          addons: addons.length > 0 ? addons : undefined,
+        };
+      });
+
+      const checkoutData = {
+        items,
+        totals: {
+          subtotal: preview.subtotal,
+          platformFee: preview.platformFee,
+          tax: preview.tax,
+          grandTotal: preview.grandTotal,
+        },
+        etaDays: preview.etaDays,
+      };
+
+      console.log("📦 Checkout Data:", JSON.stringify(checkoutData, null, 2));
+      console.log("🛒 Cart Lines:", lines);
+
+      const result = await orderService.checkout(checkoutData);
+
+      if (result.ok && result.orderId) {
+        // Success - clear cart and redirect
+        clear();
+        alert(`🎉 Checkout berhasil!\n\nOrder ID: ${result.orderId}\n\nAnda akan diarahkan ke halaman utama.`);
+        router.push("/"); // or `/orders/${result.orderId}`
+      } else {
+        setError(result.message || "Checkout gagal. Silakan coba lagi.");
+      }
+    } catch (err) {
+      setError("Terjadi kesalahan saat memproses checkout.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -131,13 +196,16 @@ export default function CheckoutPage() {
             </span>
           </label>
 
-          {/* Pay button (mock) */}
+          {/* Error message */}
+          {error && <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-2 text-sm text-red-700">{error}</div>}
+
+          {/* Pay button */}
           <button
-            disabled={!canPay}
-            onClick={() => alert(`Mock pay\nEmail: ${email}\nNotes: ${notes}`)}
+            disabled={!canPay || isProcessing}
+            onClick={handleCheckout}
             className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-2.5 text-white transition hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Bayar (Mock)
+            {isProcessing ? "Memproses..." : "Bayar Sekarang"}
             <ArrowRight className="h-4 w-4" />
           </button>
 

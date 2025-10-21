@@ -15,6 +15,11 @@ export default function AddOnList({ addons, selected, onChange }: Props) {
     onChange(next);
   };
 
+  // Handle empty or undefined addons
+  if (!addons || addons.length === 0) {
+    return <div className="text-sm text-gray-500 p-4 bg-gray-50 rounded-lg">Tidak ada add-on tersedia untuk produk ini.</div>;
+  }
+
   return (
     <div className="space-y-2">
       {addons.map((a) => (

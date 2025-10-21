@@ -10,6 +10,7 @@ type CartState = {
   remove: (productId: string) => void;
   setAddOns: (productId: string, addOnIds: string[]) => void;
   setQty: (productId: string, qty: number) => void;
+  clear: () => void;
   totals: () => { subtotal: number; items: number };
 };
 
@@ -38,6 +39,7 @@ export const useCart = create<CartState>((set, get) => ({
       if (line) line.quantity = Math.max(1, qty);
       return { lines: [...state.lines] };
     }),
+  clear: () => set({ lines: [] }),
   totals: () => {
     const { lines } = get();
     const subtotal = lines.reduce((sum, l) => {

@@ -12,10 +12,20 @@ export function calcLineSubtotal(
   base: number;
   extraSla: number;
 } {
-  const base = product.basePrice;
-  const addOns: AddOn[] = product.addOns.filter((a) => selectedAddOnIds.includes(a.id));
-  const addOnTotal = addOns.reduce((sum, a) => sum + a.price, 0);
-  const extraSla = addOns.reduce((sum, a) => sum + (a.extraSlaDays ?? 0), 0);
+  // Handle both camelCase and snake_case from backend
+  const base = product.basePrice ?? (product as any).base_price ?? 0;
+  const addOns: AddOn[] = (product.addOns || []).filter((a) => selectedAddOnIds.includes(a.id));
+  const addOnTotal = addOns.reduce((sum, a) => sum + (a.price ?? 0), 0);
+  const extraSla = addOns.reduce((sum, a) => sum + (a.extraSlaDays ?? (a as any).extra_sla_days ?? 0), 0);
+
+  console.log("💰 Price calculation:", {
+    product: product.title,
+    base,
+    addOnsCount: addOns.length,
+    addOnTotal,
+    total: base + addOnTotal,
+  });
+
   return { total: base + addOnTotal, addOnTotal, base, extraSla };
 }
 
