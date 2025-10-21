@@ -26,8 +26,8 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
   if (!ready || !user) {
     return (
-      <main className="mx-auto max-w-7xl px-4 py-10">
-        <div className="mx-auto max-w-sm rounded-2xl border border-white/60 bg-white/60 p-6 text-center backdrop-blur-xl ring-1 ring-black/5">
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="mx-auto max-w-sm rounded-2xl border border-white/60 bg-white/60 p-6 text-center backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)]">
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/80 border-t-transparent mx-auto mb-3" />
           <div className="text-sm text-neutral-700">Memuat…</div>
         </div>

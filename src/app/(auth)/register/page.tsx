@@ -80,14 +80,12 @@ export default function RegisterPage() {
 /* --- small components --- */
 function AuthShell({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh flex flex-col">
+    <div className="w-full max-w-md rounded-2xl border border-white/60 bg-white/60 p-6 md:p-8 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)]">
       <main className="mx-auto max-w-6xl px-4 py-10 flex-1">
-        <div className="mx-auto max-w-md">
-          <div className="rounded-2xl border border-white/60 bg-white/60 p-6 md:p-8 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)]">
-            <h1 className="text-2xl font-semibold">{title}</h1>
-            {subtitle && <p className="mt-1 text-sm text-neutral-700">{subtitle}</p>}
-            <div className="mt-6">{children}</div>
-          </div>
+        <div className="max-w-md">
+          <h1 className="text-2xl font-semibold">{title}</h1>
+          {subtitle && <p className="mt-1 text-sm text-neutral-700">{subtitle}</p>}
+          <div className="mt-6">{children}</div>
         </div>
       </main>
     </div>

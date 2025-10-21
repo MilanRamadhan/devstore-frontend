@@ -58,7 +58,7 @@ export default function Home() {
             </h1>
             <p className="max-w-xl text-neutral-600">Pilih template, centang add-on, cek total otomatis. Pembayaran aman pakai escrow, rilis bertahap per milestone. Semua serba jelas, tinggal gas.</p>
 
-            <div className="grid gap-4 sm:grid-cols-2 md:max-w-md">
+            <div data-aos="fade-right" data-aos-duration="1000" className="grid gap-4 sm:grid-cols-2 md:max-w-md">
               {/* tombol 1: Lihat Katalog */}
               <Link
                 href="/products"

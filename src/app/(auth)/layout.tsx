@@ -1,4 +1,4 @@
 // src/app/(auth)/layout.tsx
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  return <main className="mx-auto max-w-6xl px-4 py-10">{children}</main>;
+  return <main className="min-h-dvh grid place-items-center px-4">{children}</main>;
 }
