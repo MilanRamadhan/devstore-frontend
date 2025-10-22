@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/store/auth";
-import { profileService, Profile, BecomeSellerRequest } from "@/lib/services/profile";
+import { profileService, Profile } from "@/lib/services/profile";
 import { useRouter } from "next/navigation";
 import { LogOut, User2, Mail, Globe, ShieldCheck, Bell, CreditCard, Download, FileText, Lock, Check, X, Pencil, Store, CheckCircle } from "lucide-react";
 
@@ -90,7 +90,7 @@ export default function ProfilePage() {
   }, [user, email]);
 
   // Check for changes
-  React.useEffect(() => {
+  useEffect(() => {
     const changed =
       displayName !== originalData.displayName ||
       bio !== originalData.bio ||
@@ -121,7 +121,6 @@ export default function ProfilePage() {
 
   function toggleEdit() {
     if (isEditing && hasChanges) {
-      // Simpan perubahan ke backend
       handleSaveProfile();
     } else if (!isEditing) {
       setIsEditing(true);
@@ -140,7 +139,6 @@ export default function ProfilePage() {
     const result = await profileService.updateMyProfile(updateData);
 
     if (result.ok && result.profile) {
-      // Update original data and local state
       const newData = {
         displayName: result.profile.display_name || "",
         bio: result.profile.bio || "",
@@ -176,7 +174,7 @@ export default function ProfilePage() {
     setBecomingSellerLoading(true);
 
     try {
-      // Gunakan applySeller untuk submit aplikasi (butuh approval admin)
+      // applySeller -> submit aplikasi (butuh approval admin)
       const result = await profileService.applySeller({
         store_name: sellerFormData.store_name.trim(),
         payout_bank: sellerFormData.payout_bank.trim(),
@@ -187,13 +185,7 @@ export default function ProfilePage() {
       if (result.ok) {
         alert("✅ " + (result.message || "Aplikasi berhasil diajukan! Tunggu persetujuan admin."));
         setShowBecomeSellerModal(false);
-        // Reset form
-        setSellerFormData({
-          store_name: "",
-          payout_bank: "",
-          payout_account: "",
-          bio: "",
-        });
+        setSellerFormData({ store_name: "", payout_bank: "", payout_account: "", bio: "" });
       } else {
         alert("❌ " + (result.message || "Gagal submit aplikasi"));
       }
@@ -219,7 +211,6 @@ export default function ProfilePage() {
           {isEditing && (
             <button
               onClick={() => {
-                // Reset ke nilai original
                 setDisplayName(originalData.displayName);
                 setBio(originalData.bio);
                 setWebsite(originalData.website);
@@ -230,17 +221,20 @@ export default function ProfilePage() {
                 setIsEditing(false);
                 setHasChanges(false);
               }}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/60 bg-white/70 px-4 py-2 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80"
+              className="group relative inline-flex items-center gap-2 justify-center rounded-2xl border border-white/60 bg-white/70 px-4 py-2 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
             >
-              <X className="h-4 w-4" />
-              Batal
+              <span className="relative z-10 inline-flex items-center gap-2">
+                <X className="h-4 w-4" />
+                Batal
+              </span>
+              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
             </button>
           )}
           <button
             onClick={toggleEdit}
             disabled={(isEditing && !hasChanges) || isSaving}
             className={[
-              "group relative inline-flex items-center gap-2 justify-center rounded-2xl border border-white/60 px-4 py-2 text-sm font-medium backdrop-blur-xl ring-1 ring-black/5 transition",
+              "group relative inline-flex items-center gap-2 justify-center rounded-2xl border border-white/60 px-4 py-2 text-sm font-medium backdrop-blur-xl ring-1 ring-black/5 transition focus:outline-none focus:ring-1 focus:ring-black/10",
               isEditing && hasChanges && !isSaving
                 ? "bg-black/90 text-white hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)]"
                 : (isEditing && !hasChanges) || isSaving
@@ -279,12 +273,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-2">
-              <button className="group relative rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70">
+              <button className="group relative rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10">
                 <span className="relative z-10">Ganti avatar</span>
                 <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-black/5" />
               </button>
               <button
-                className="group relative inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+                className="group relative inline-flex items-center justify-center gap-2 rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
                 onClick={() => alert("Keluar dari semua sesi (mock)")}
               >
                 <span className="relative z-10 flex items-center gap-2">
@@ -346,7 +340,7 @@ export default function ProfilePage() {
                       }}
                       placeholder="Cerita singkat tentang kamu sebagai pembeli/developer…"
                     />
-                    <div className="mt-1 text-xs text-neutral-500 text-right">{bio?.length ?? 0}/160</div>
+                    <div className="mt-1 text-right text-xs text-neutral-500">{bio?.length ?? 0}/160</div>
                   </div>
                 ) : (
                   <div className="min-h-[40px] w-full rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm ring-1 ring-black/5 text-neutral-800">
@@ -387,7 +381,7 @@ export default function ProfilePage() {
             <div className="mt-3">
               <button
                 onClick={() => alert("Ganti password (mock).")}
-                className="group relative inline-flex items-center justify-center rounded-2xl border border-white/60 bg-white/60 px-5 py-2.5 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+                className="group relative inline-flex items-center justify-center rounded-2xl border border-white/60 bg-white/60 px-5 py-2.5 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
               >
                 <span className="relative z-10">Ganti password</span>
                 <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
@@ -412,7 +406,7 @@ export default function ProfilePage() {
                 <div className="mt-3">
                   <button
                     onClick={() => router.push("/seller")}
-                    className="group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/60 px-5 py-2.5 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/60 px-5 py-2.5 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
                   >
                     <span className="relative z-10 flex items-center gap-2">
                       <Store className="h-4 w-4" />
@@ -430,7 +424,7 @@ export default function ProfilePage() {
                 <div className="mt-3">
                   <button
                     onClick={() => setShowBecomeSellerModal(true)}
-                    className="group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)]"
+                    className="group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-5 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)] focus:outline-none focus:ring-1 focus:ring-black/10"
                   >
                     <span className="relative z-10 flex items-center gap-2">
                       <Store className="h-4 w-4" />
@@ -507,13 +501,13 @@ export default function ProfilePage() {
                       </td>
                       <td className="text-right">
                         <div className="inline-flex gap-2">
-                          <button className="group relative inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-1.5 text-xs font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70">
+                          <button className="group relative inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-1.5 text-xs font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10">
                             <span className="relative z-10 flex items-center gap-1.5">
                               <Download className="h-3.5 w-3.5" /> Download
                             </span>
                             <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-black/5" />
                           </button>
-                          <button className="group relative inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-1.5 text-xs font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70">
+                          <button className="group relative inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-1.5 text-xs font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10">
                             <span className="relative z-10 flex items-center gap-1.5">
                               <FileText className="h-3.5 w-3.5" /> Invoice
                             </span>
@@ -543,7 +537,7 @@ export default function ProfilePage() {
                 <p className="text-sm text-neutral-600">Aksi ini permanen dan tidak bisa dibatalkan.</p>
               </div>
               <button
-                className="group relative inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 hover:shadow-[0_6px_24px_rgba(220,38,38,0.25)]"
+                className="group relative inline-flex items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 hover:shadow-[0_6px_24px_rgba(220,38,38,0.25)] focus:outline-none focus:ring-1 focus:ring-black/10"
                 onClick={() => alert("Hapus akun (mock).")}
               >
                 <span className="relative z-10">Hapus</span>
@@ -555,13 +549,13 @@ export default function ProfilePage() {
 
       {/* Modal: Jadi Seller */}
       {showBecomeSellerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          {/* overlay */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !becomingSellerLoading && setShowBecomeSellerModal(false)} />
-
-          {/* modal card */}
-          <div className="relative w-full max-w-lg animate-in fade-in zoom-in duration-200">
-            <div className="relative rounded-2xl border border-white/60 bg-white/70 p-6 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
+        <ModalRoot isOpen={showBecomeSellerModal} onClose={() => !becomingSellerLoading && setShowBecomeSellerModal(false)}>
+          <div className="relative w-full max-w-lg">
+            {/* dialog card */}
+            <div
+              className="relative animate-[modalIn_180ms_ease-out] rounded-2xl border border-white/60 bg-white/70 p-6 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_12px_40px_rgba(0,0,0,0.15)] data-[closing=true]:animate-[modalOut_140ms_ease-in]"
+              data-modal-surface
+            >
               {/* inner ring accent */}
               <div className="pointer-events-none absolute inset-0 rounded-[16px] ring-1 ring-black/5" />
 
@@ -569,7 +563,7 @@ export default function ProfilePage() {
               <div className="mb-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/70 ring-1 ring-black/5">
-                    <Store className="h-5 w-5 text-neutral-900" />
+                    <Store className="h-5 w-5 text-neutral-900" aria-hidden="true" />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold tracking-tight">Jadi Seller</h2>
@@ -577,7 +571,15 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <button onClick={() => setShowBecomeSellerModal(false)} disabled={becomingSellerLoading} className="rounded-xl p-2 text-neutral-700 hover:bg-white/75 transition disabled:opacity-50" aria-label="Tutup">
+                <button
+                  ref={(el) => {
+                    (window as any).__modalFirstFocus = el || undefined;
+                  }}
+                  onClick={() => setShowBecomeSellerModal(false)}
+                  disabled={becomingSellerLoading}
+                  className="rounded-xl p-2 text-neutral-700 transition hover:bg-white/75 focus:outline-none focus:ring-1 focus:ring-black/10 disabled:opacity-50"
+                  aria-label="Tutup"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -638,7 +640,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => setShowBecomeSellerModal(false)}
                   disabled={becomingSellerLoading}
-                  className="group relative inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group relative inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 hover:ring-black/10 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="relative z-10">Batal</span>
                   <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
@@ -647,7 +649,7 @@ export default function ProfilePage() {
                 <button
                   onClick={handleBecomeSeller}
                   disabled={becomingSellerLoading || !sellerFormData.store_name.trim() || !sellerFormData.payout_bank.trim() || !sellerFormData.payout_account.trim()}
-                  className="group relative inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="group relative inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)] focus:outline-none focus:ring-1 focus:ring-black/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="relative z-10 inline-flex items-center gap-2">
                     {becomingSellerLoading ? (
@@ -663,7 +665,7 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-        </div>
+        </ModalRoot>
       )}
     </div>
   );
@@ -672,7 +674,12 @@ export default function ProfilePage() {
 /* ================== Helpers & small components ================== */
 
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={"rounded-2xl border border-white/60 bg-white/60 backdrop-blur-xl ring-1 ring-black/5 " + className}>{children}</div>;
+  return (
+    <div className={"relative rounded-2xl border border-white/60 bg-white/60 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] " + className}>
+      <div className="pointer-events-none absolute inset-0 rounded-[16px] ring-1 ring-black/5" />
+      {children}
+    </div>
+  );
 }
 
 function SectionTitle({ icon, title, desc }: { icon: React.ReactNode; title: string; desc?: string }) {
@@ -702,7 +709,7 @@ function Chip({ active, children, onClick, disabled }: { active?: boolean; child
       onClick={onClick}
       disabled={disabled}
       className={[
-        "rounded-full px-3 py-1.5 text-sm transition",
+        "rounded-full px-3 py-1.5 text-sm transition focus:outline-none focus:ring-1 focus:ring-black/10",
         active ? "bg-white/80 text-neutral-900 ring-1 ring-black/5" : "border border-white/60 bg-white/60 text-neutral-700 ring-1 ring-black/5",
         disabled ? "cursor-not-allowed opacity-60" : "hover:bg-white/75",
       ].join(" ")}
@@ -720,7 +727,10 @@ function Toggle({ label, checked, onChange, disabled }: { label: string; checked
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={["flex w-full items-center justify-between rounded-xl border border-white/60 bg-white/60 px-3 py-2 ring-1 ring-black/5", disabled ? "cursor-not-allowed opacity-60" : "hover:bg-white/70"].join(" ")}
+      className={[
+        "flex w-full items-center justify-between rounded-xl border border-white/60 bg-white/60 px-3 py-2 ring-1 ring-black/5 focus:outline-none focus:ring-1 focus:ring-black/10",
+        disabled ? "cursor-not-allowed opacity-60" : "hover:bg-white/70",
+      ].join(" ")}
     >
       <span className="text-sm text-neutral-800">{label}</span>
       <span className={["inline-flex h-5 w-9 items-center rounded-full transition", checked ? "bg-black/90" : "bg-black/10"].join(" ")}>
@@ -732,12 +742,17 @@ function Toggle({ label, checked, onChange, disabled }: { label: string; checked
 
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   const { className = "", ...rest } = props;
-  return <input {...rest} className={["w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm", "outline-none ring-1 ring-black/5 placeholder:text-neutral-400 focus:bg-white/90", className].join(" ")} />;
+  return <input {...rest} className={["w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm", "outline-none ring-1 ring-black/5 placeholder:text-neutral-400 focus:bg-white/90 focus:ring-black/10", className].join(" ")} />;
 }
 
 function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   const { className = "", ...rest } = props;
-  return <textarea {...rest} className={["w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm", "outline-none ring-1 ring-black/5 placeholder:text-neutral-400 focus:bg-white/90 resize-none", className].join(" ")} />;
+  return (
+    <textarea
+      {...rest}
+      className={["w-full rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm", "outline-none ring-1 ring-black/5 placeholder:text-neutral-400 focus:bg-white/90 focus:ring-black/10 resize-none", className].join(" ")}
+    />
+  );
 }
 
 /* merge class helper */
@@ -758,7 +773,7 @@ function InputIcon({ icon, children }: { icon: React.ReactNode; children: React.
   );
 }
 
-/** Inline-edit: tampilan teks → klik Edit → jadi input/textarea */
+/** Inline-edit helper */
 function EditableField({
   value,
   onSave,
@@ -799,7 +814,7 @@ function EditableField({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="group relative ml-2 inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+          className="group relative ml-2 inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
         >
           <span className="relative z-10 flex items-center gap-1.5">
             <Pencil className="h-4 w-4" />
@@ -838,7 +853,7 @@ function EditableField({
           <button
             type="button"
             onClick={cancel}
-            className="group relative inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] hover:bg-white/70"
+            className="group relative inline-flex items-center gap-1.5 rounded-xl border border-white/60 bg-white/60 px-3 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
           >
             <span className="relative z-10 flex items-center gap-1.5">
               <X className="h-4 w-4" />
@@ -849,7 +864,7 @@ function EditableField({
           <button
             type="button"
             onClick={submit}
-            className="group relative inline-flex items-center gap-1.5 rounded-2xl border border-white/60 bg-white/70 px-3 py-2 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]"
+            className="group relative inline-flex items-center gap-1.5 rounded-2xl border border-white/60 bg-white/70 px-3 py-2 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
           >
             <span className="relative z-10 flex items-center gap-1.5">
               <Check className="h-4 w-4" />
@@ -883,5 +898,100 @@ function BtnGhost({ children, onClick }: { children: React.ReactNode; onClick?: 
     <button onClick={onClick} className="btn-ghost">
       {children}
     </button>
+  );
+}
+
+/* ====== Modal Root (smooth) ====== */
+function ModalRoot({ isOpen, onClose, children }: { isOpen: boolean; onClose: () => void; children: React.ReactNode }) {
+  const [closing, setClosing] = useState(false);
+
+  // ESC to close + focus trap + scroll lock
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const prevOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+
+    const toFocus = (window as any).__modalFirstFocus as HTMLElement | undefined;
+    toFocus?.focus?.();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        startClose();
+      }
+      if (e.key === "Tab") {
+        const root = document.querySelector("[data-modal-root]") as HTMLElement | null;
+        if (!root) return;
+        const focusables = root.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.documentElement.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
+  function startClose() {
+    setClosing(true);
+    setTimeout(() => {
+      setClosing(false);
+      onClose();
+    }, 160);
+  }
+
+  if (!isOpen) return null;
+
+  return (
+    <div data-modal-root className="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      {/* overlay */}
+      <div className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity ${closing ? "opacity-0" : "opacity-100"}`} onClick={startClose} aria-hidden="true" />
+      {/* dialog wrapper */}
+      <div className={`relative z-[91] w-full max-w-lg transition-transform ${closing ? "scale-[0.98] translate-y-2 opacity-0" : "scale-100 translate-y-0 opacity-100"}`}>
+        {React.cloneElement(children as React.ReactElement<any>, { "data-closing": closing } as any)}
+      </div>
+
+      {/* keyframes */}
+      <style jsx>{`
+        @keyframes modalIn {
+          from {
+            opacity: 0;
+            transform: translateY(8px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        @keyframes modalOut {
+          from {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+          to {
+            opacity: 0;
+            transform: translateY(8px) scale(0.98);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-modal-root] * {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
+    </div>
   );
 }

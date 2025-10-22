@@ -36,7 +36,6 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
 
       if (result.ok && result.product) {
         setP(result.product as any);
-
         if ((result.product as any).seller_id) {
           try {
             const sellerResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile/${(result.product as any).seller_id}`);
@@ -119,9 +118,9 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
             </div>
           )}
 
-          {/* ===== Store Card (pindah ke bawah gambar) ===== */}
+          {/* ===== Store Card ===== */}
           {seller && (
-            <GlassCard className="p-5">
+            <GlassCard className="p-5 transition hover:bg-white/75 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/60 bg-white/70 ring-1 ring-black/5">
                   <StoreIcon className="h-6 w-6 text-neutral-800" />
@@ -131,7 +130,12 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
                   <div className="text-base font-semibold text-neutral-900">{seller.store_name || seller.display_name}</div>
                   <div className="text-sm text-neutral-600">{seller.display_name}</div>
                 </div>
-                <button onClick={handleStoreClick} className="rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-sm font-medium text-neutral-900 ring-1 ring-black/5 transition hover:bg-white/80">
+
+                {/* tombol visit store */}
+                <button
+                  onClick={handleStoreClick}
+                  className="rounded-2xl border border-white/60 bg-white/70 px-4 py-2 text-sm font-medium text-neutral-800 ring-1 ring-black/5 transition hover:bg-white/85 hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] focus:outline-none focus:ring-1 focus:ring-black/10"
+                >
                   Kunjungi Toko
                 </button>
               </div>
@@ -165,7 +169,7 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
 /* ===== scoped helper ===== */
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`relative rounded-2xl border border-white/60 bg-white/60 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] ${className}`}>
+    <div className={`relative rounded-2xl border border-white/60 bg-white/60 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition hover:bg-white/75 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] ${className}`}>
       <div className="pointer-events-none absolute inset-0 rounded-[16px] ring-1 ring-black/5" />
       {children}
     </div>

@@ -1,3 +1,4 @@
+// src/app/(public)/store/[id]/page.tsx
 "use client";
 
 import { useEffect, useState, use } from "react";
@@ -36,7 +37,9 @@ export default function StorePage({ params }: { params: Promise<{ id: string }> 
         const j = await r.json();
         if (j.ok && j.data) setStore(j.data);
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
 
     // ---- fetch produk toko
     const pr = await productService.getProducts();
@@ -49,7 +52,7 @@ export default function StorePage({ params }: { params: Promise<{ id: string }> 
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mx-auto max-w-6xl px-4 py-10" aria-live="polite">
         <GlassCard className="p-6 text-center">
           <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-black/80 border-t-transparent" />
           <p className="mt-3 text-sm text-neutral-700">Memuat toko…</p>
@@ -73,11 +76,11 @@ export default function StorePage({ params }: { params: Promise<{ id: string }> 
   const joined = new Date(store.created_at).toLocaleDateString("id-ID", { month: "long", year: "numeric" }) || "-";
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
       {/* ===== Header Toko ===== */}
-      <GlassCard className="p-6 md:p-8">
+      <GlassCard className="p-6 transition hover:bg-white/70 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] md:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-start">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/60 bg-white/70 ring-1 ring-black/5">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/60 bg-white/70 ring-1 ring-black/5" aria-hidden="true">
             <StoreIcon className="h-8 w-8 text-neutral-900" />
           </div>
 
@@ -88,9 +91,9 @@ export default function StorePage({ params }: { params: Promise<{ id: string }> 
             {store.bio && <p className="mt-3 max-w-2xl text-neutral-700">{store.bio}</p>}
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-neutral-700">
-              <InfoPill icon={<Mail className="h-3.5 w-3.5" />}>{store.email}</InfoPill>
-              <InfoPill icon={<Calendar className="h-3.5 w-3.5" />}>Bergabung {joined}</InfoPill>
-              <InfoPill icon={<Package className="h-3.5 w-3.5" />}>{products.length} produk</InfoPill>
+              <InfoPill icon={<Mail className="h-3.5 w-3.5" aria-hidden="true" />}>{store.email}</InfoPill>
+              <InfoPill icon={<Calendar className="h-3.5 w-3.5" aria-hidden="true" />}>Bergabung {joined}</InfoPill>
+              <InfoPill icon={<Package className="h-3.5 w-3.5" aria-hidden="true" />}>{products.length} produk</InfoPill>
             </div>
           </div>
         </div>
@@ -122,7 +125,8 @@ export default function StorePage({ params }: { params: Promise<{ id: string }> 
 
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`relative rounded-2xl border border-white/60 bg-white/60 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] ${className}`}>
+    <div className={`relative rounded-2xl border border-white/60 bg-white/60 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_6px_24px_rgba(0,0,0,0.06)] ${className}`} role="region" aria-label="Section">
+      {/* ring aksen tipis */}
       <div className="pointer-events-none absolute inset-0 rounded-[16px] ring-1 ring-black/5" />
       {children}
     </div>
@@ -131,9 +135,12 @@ function GlassCard({ children, className = "" }: { children: React.ReactNode; cl
 
 function InfoPill({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1 ring-1 ring-black/5">
+    <span
+      className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1 text-neutral-800 ring-1 ring-black/5 transition hover:bg-white/80 hover:ring-black/10 hover:shadow-[0_4px_20px_rgba(0,0,0,0.05)] focus:outline-none focus:ring-1 focus:ring-black/10"
+      tabIndex={0}
+    >
       {icon}
-      <span>{children}</span>
+      <span className="truncate">{children}</span>
     </span>
   );
 }
