@@ -12,6 +12,14 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { lines, clear } = useCart();
 
+  // UI state - MUST be declared before any conditional returns
+  const [email, setEmail] = useState("");
+  const [notes, setNotes] = useState("");
+  const [agree, setAgree] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState("");
+
+  // Check if cart is empty AFTER all hooks
   if (lines.length === 0) {
     return (
       <div className="mx-auto max-w-3xl">
@@ -31,20 +39,8 @@ export default function CheckoutPage() {
     return { total: total * l.quantity };
   });
 
-  const baseEta = Math.max(0, ...lines.map((l) => l.product.baseSlaDays ?? 0));
-  const preview = checkoutPreview(lineTotals, baseEta);
-
-  // UI state
-  const [email, setEmail] = useState("");
-  const [notes, setNotes] = useState("");
-  const [agree, setAgree] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState("");
-
-  // mock split milestone: 30/50/20
-  const m1 = Math.round(preview.grandTotal * 0.3);
-  const m2 = Math.round(preview.grandTotal * 0.5);
-  const m3 = preview.grandTotal - m1 - m2;
+  // ✅ INSTANT DELIVERY: No ETA needed
+  const preview = checkoutPreview(lineTotals);
 
   const canPay = agree && email.trim().length > 3;
 
@@ -55,53 +51,37 @@ export default function CheckoutPage() {
     setError("");
 
     try {
-      // Transform cart lines to backend format
+      // Transform cart lines to backend format - simplified for dual mode
       const items = lines.map((line) => {
-        const { base, addOnTotal, total } = calcLineSubtotal(line.product, line.selectedAddOnIds);
-
-        // Get addon details
-        const addons = line.selectedAddOnIds.map((addonId) => {
-          const addon = (line.product.addOns || []).find((a) => a.id === addonId);
-          return {
-            addon_id: addonId,
-            price: addon?.price || 0,
-          };
-        });
-
         return {
           product_id: line.product.id,
           quantity: line.quantity,
-          unit_price: total, // price per item including base + addons
-          total: total * line.quantity,
-          addons: addons.length > 0 ? addons : undefined,
+          brief: line.brief || undefined, // For custom products
         };
       });
 
-      const checkoutData = {
-        items,
-        totals: {
-          subtotal: preview.subtotal,
-          platformFee: preview.platformFee,
-          tax: preview.tax,
-          grandTotal: preview.grandTotal,
-        },
-        etaDays: preview.etaDays,
-      };
-
-      console.log("📦 Checkout Data:", JSON.stringify(checkoutData, null, 2));
+      console.log("📦 Checkout Items:", JSON.stringify(items, null, 2));
       console.log("🛒 Cart Lines:", lines);
 
-      const result = await orderService.checkout(checkoutData);
+      const result = await orderService.checkout(items);
 
       if (result.ok && result.orderId) {
-        // Success - clear cart and redirect
+        // Success - clear cart and redirect to order detail
         clear();
-        alert(`🎉 Checkout berhasil!\n\nOrder ID: ${result.orderId}\n\nAnda akan diarahkan ke halaman utama.`);
-        router.push("/"); // or `/orders/${result.orderId}`
+
+        // ✅ Check if requires_brief is true - show message
+        if ((result as any).requires_brief) {
+          // Navigate with warning message
+          router.push(`/orders/${result.orderId}?warning=brief_required`);
+        } else {
+          // Normal redirect
+          router.push(`/orders/${result.orderId}`);
+        }
       } else {
         setError(result.message || "Checkout gagal. Silakan coba lagi.");
       }
     } catch (err) {
+      console.error("❌ Checkout error:", err);
       setError("Terjadi kesalahan saat memproses checkout.");
     } finally {
       setIsProcessing(false);
@@ -114,8 +94,8 @@ export default function CheckoutPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Stepper />
         <GlassBadge>
-          <Clock className="h-3.5 w-3.5" />
-          Estimasi selesai: {preview.etaDays} hari
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Instant Digital Delivery
         </GlassBadge>
       </div>
 
@@ -125,7 +105,7 @@ export default function CheckoutPage() {
           {/* Kontak Pembeli */}
           <GlassCard className="p-4 md:p-5">
             <h2 className="text-lg font-semibold">Informasi pembeli</h2>
-            <p className="mt-1 text-sm text-neutral-700">Email dipakai untuk notifikasi order, milestone, dan file delivery.</p>
+            <p className="mt-1 text-sm text-neutral-700">Email dipakai untuk notifikasi order dan akses download source code.</p>
             <div className="mt-4">
               <label className="text-sm text-neutral-700">Email</label>
               <input
@@ -139,7 +119,7 @@ export default function CheckoutPage() {
             <div className="mt-4">
               <label className="text-sm text-neutral-700">Catatan untuk seller (opsional)</label>
               <textarea
-                placeholder="Contoh: minta warna brand biru, integrasi Midtrans, deploy ke Vercel..."
+                placeholder="Contoh: minta warna brand biru, custom logo, dll..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
@@ -148,21 +128,34 @@ export default function CheckoutPage() {
             </div>
           </GlassCard>
 
-          {/* Escrow & Milestone Preview */}
+          {/* ✅ INSTANT DELIVERY INFO - Replace Milestone/Escrow section */}
           <GlassCard className="p-4 md:p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Escrow & milestone</h2>
-              <span className="inline-flex items-center gap-2 text-xs text-neutral-700">
-                <ShieldCheck className="h-4 w-4" />
-                Dana dirilis setelah approval kamu
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-green-600">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Instant Digital Delivery</h2>
+                <p className="text-sm text-neutral-700">Langsung akses download setelah pembayaran sukses</p>
+              </div>
             </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <MilestoneItem index={1} title="Setup" amount={m1} hint="Inisialisasi & setup project" />
-              <MilestoneItem index={2} title="Kustomisasi" amount={m2} hint="Implementasi add-on & fitur" />
-              <MilestoneItem index={3} title="Handover" amount={m3} hint="Final delivery & dokumen" />
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-white/60 bg-white/60 p-3 ring-1 ring-black/5">
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="text-sm font-medium">Source Code</span>
+                </div>
+                <p className="mt-1 text-xs text-neutral-600">File lengkap dengan dokumentasi</p>
+              </div>
+              <div className="rounded-xl border border-white/60 bg-white/60 p-3 ring-1 ring-black/5">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <FileText className="mr-1 inline h-4 w-4" />
+                  <span className="text-sm font-medium">Panduan Setup</span>
+                </div>
+                <p className="mt-1 text-xs text-neutral-600">Instruksi instalasi & konfigurasi</p>
+              </div>
             </div>
-            <p className="mt-3 text-xs text-neutral-600">Proporsi default 30% / 50% / 20%. Seller bisa mengusulkan penyesuaian sebelum mulai.</p>
+            <p className="mt-3 text-xs text-neutral-600">✨ Tidak ada waktu tunggu - langsung download begitu bayar!</p>
           </GlassCard>
         </div>
 
@@ -212,10 +205,10 @@ export default function CheckoutPage() {
           {/* tiny hints */}
           <div className="mt-3 space-y-1 text-[11px] text-neutral-600">
             <p>
-              <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" /> Dana ditahan di escrow, dirilis per milestone.
+              <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" /> Instant access setelah pembayaran sukses.
             </p>
             <p>
-              <FileText className="mr-1 inline h-3.5 w-3.5" /> Bukti & file delivery akan tersimpan di order.
+              <FileText className="mr-1 inline h-3.5 w-3.5" /> Link download tersimpan di halaman order.
             </p>
           </div>
         </GlassCard>
@@ -248,19 +241,7 @@ function Row({ label, value }: { label: React.ReactNode; value: React.ReactNode 
   );
 }
 
-function MilestoneItem({ index, title, amount, hint }: { index: number; title: string; amount: number; hint: string }) {
-  return (
-    <div className="rounded-xl border border-white/60 bg-white/60 p-3 ring-1 ring-black/5">
-      <div className="flex items-center justify-between">
-        <div className="font-medium">
-          Milestone {index}: {title}
-        </div>
-        <div className="text-sm font-semibold">{formatIDR(amount)}</div>
-      </div>
-      <div className="mt-1 text-xs text-neutral-600">{hint}</div>
-    </div>
-  );
-}
+// ✅ INSTANT DELIVERY: Removed MilestoneItem component - not needed
 
 function Stepper() {
   const stepClass = "flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs text-neutral-700 ring-1 ring-black/5";

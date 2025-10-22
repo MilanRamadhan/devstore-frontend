@@ -8,6 +8,23 @@ export type ApiResponse<T = any> = {
   error?: string;
 };
 
+// Global redirect handler for auth errors
+function handleAuthError() {
+  if (typeof window !== "undefined") {
+    // Store current URL to redirect back after login
+    const currentPath = window.location.pathname + window.location.search;
+    if (currentPath !== "/login" && currentPath !== "/register") {
+      localStorage.setItem("devstore_redirect_after_login", currentPath);
+    }
+
+    // Show toast/notification
+    console.log("🔴 Session expired, redirecting to login...");
+
+    // Redirect to login
+    window.location.href = "/login?expired=true";
+  }
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -24,6 +41,9 @@ class ApiClient {
       const token = this.getToken();
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
+        console.log("🔑 Using token:", token.substring(0, 20) + "...");
+      } else {
+        console.warn("⚠️ No token found in localStorage for authenticated request!");
       }
     }
 
@@ -87,6 +107,18 @@ class ApiClient {
 
   async authenticatedRequest<T = any>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
+    const token = this.getToken();
+
+    if (!token) {
+      console.error("❌ No token available for authenticated request");
+      return {
+        ok: false,
+        message: "Anda belum login. Silakan login terlebih dahulu.",
+        error: "NO_TOKEN",
+      };
+    }
+
+    console.log("🔵 Authenticated API Request:", { url, method: options.method || "GET", hasToken: !!token });
 
     try {
       const response = await fetch(url, {
@@ -98,8 +130,24 @@ class ApiClient {
       });
 
       const data = await response.json();
+      console.log("🟢 Authenticated API Response:", { url, status: response.status, data });
 
       if (!response.ok) {
+        // Handle 401 Unauthorized specifically
+        if (response.status === 401) {
+          console.error("❌ 401 Unauthorized - Token might be invalid or expired");
+          this.clearToken(); // Clear invalid token
+
+          // Trigger redirect to login
+          handleAuthError();
+
+          return {
+            ok: false,
+            message: "Sesi Anda telah berakhir. Silakan login kembali.",
+            error: "UNAUTHORIZED",
+          };
+        }
+
         return {
           ok: false,
           message: data.message || "Terjadi kesalahan",
@@ -112,7 +160,7 @@ class ApiClient {
         data: data.data || data,
       };
     } catch (error) {
-      console.error("API request error:", error);
+      console.error("❌ Authenticated API request error:", error);
       return {
         ok: false,
         message: "Gagal menghubungi server",

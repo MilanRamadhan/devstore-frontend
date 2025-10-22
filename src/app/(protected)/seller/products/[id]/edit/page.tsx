@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { sellerService } from "@/lib/services/seller";
 import { Product } from "@/lib/types";
+import { compressImage, getBase64Size } from "@/lib/imageCompression";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: productId } = use(params);
@@ -89,18 +90,25 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         setError("File harus berupa gambar");
         return;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Ukuran file maksimal 5MB");
+      if (file.size > 10 * 1024 * 1024) {
+        setError("Ukuran file maksimal 10MB");
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        setFormData({ ...formData, cover_url: result });
-      };
-      reader.readAsDataURL(file);
+      // Compress image before upload
+      setError("Mengompress gambar...");
+      compressImage(file, 1200, 0.8)
+        .then((compressedBase64) => {
+          const sizeKB = getBase64Size(compressedBase64);
+          console.log(`📸 Image compressed: ${(file.size / 1024).toFixed(0)}KB → ${sizeKB.toFixed(0)}KB`);
+
+          setImagePreview(compressedBase64);
+          setFormData({ ...formData, cover_url: compressedBase64 });
+          setError(""); // Clear error message
+        })
+        .catch((err) => {
+          setError("Gagal mengompress gambar: " + err.message);
+        });
     }
   }
 

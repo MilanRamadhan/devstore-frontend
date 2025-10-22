@@ -28,10 +28,7 @@ export default function AddOnList({ addons, selected, onChange }: Props) {
           <div className="flex-1">
             <div className="font-medium">{a.name}</div>
             {a.description && <div className="text-sm text-gray-600">{a.description}</div>}
-            <div className="text-sm mt-1">
-              {formatIDR(a.price)}
-              {a.extraSlaDays ? ` • +${a.extraSlaDays} hari` : ""}
-            </div>
+            <div className="text-sm mt-1">{formatIDR(a.price)}</div>
           </div>
         </label>
       ))}

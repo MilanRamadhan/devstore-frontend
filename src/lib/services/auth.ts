@@ -62,7 +62,13 @@ export const authService = {
 
     if (response.ok && response.data) {
       // Save token
-      api.setToken(response.data.access_token);
+      const token = response.data.access_token;
+      if (token) {
+        api.setToken(token);
+        console.log("✅ Token saved to localStorage:", token.substring(0, 20) + "...");
+      } else {
+        console.warn("⚠️ No access_token in login response!");
+      }
 
       // Transform to User format with role
       const user: User = {

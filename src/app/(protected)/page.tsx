@@ -3,17 +3,43 @@
 import Link from "next/link";
 import ProductCard from "@/components/product-card";
 import { PRODUCTS } from "@/lib/mock";
-import { Lock, ShieldCheck, Star, Puzzle, Rocket, FlaskConical, Store, Sparkles } from "lucide-react";
-import { useEffect } from "react";
+import { Lock, ShieldCheck, Star, Puzzle, Rocket, FlaskConical } from "lucide-react";
+import { useEffect, useState } from "react";
+import { productService } from "@/lib/services/products";
+import type { Product } from "@/lib/types";
 import "aos/dist/aos.css";
 
 export default function Home() {
-  const featured = PRODUCTS.slice(0, 2);
+  const [trending, setTrending] = useState<Product[] | null>(null);
+  const [loadingTrending, setLoadingTrending] = useState(true);
+
   useEffect(() => {
-    // AOS (Animate On Scroll) initialization
-    import("aos").then((AOS) => {
-      AOS.init();
-    });
+    import("aos").then((AOS) => AOS.init());
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoadingTrending(true);
+        const res = await productService.getProducts();
+        if (!alive) return;
+
+        if (res.ok && Array.isArray(res.products)) {
+          const published = res.products.filter((p: any) => p.published !== false);
+          setTrending((published.length ? published : PRODUCTS).slice(0, 2) as unknown as Product[]);
+        } else {
+          setTrending(PRODUCTS.slice(0, 2) as unknown as Product[]);
+        }
+      } catch {
+        setTrending(PRODUCTS.slice(0, 2) as unknown as Product[]);
+      } finally {
+        setLoadingTrending(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   return (
@@ -107,41 +133,42 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ====== FITUR ====== */}
+        {/* FITUR */}
         <section id="fitur" className="space-y-6">
           <h2 className="text-2xl font-semibold tracking-tight">Kenapa DevStore?</h2>
           <div className="grid gap-4 md:grid-cols-3">
-            <GlassCard className="p-5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition">
-              <FeatureItem icon={<Puzzle className="h-5 w-5 text-neutral-700" />} title="Add-on Transparan" desc="Branding, payment, deploy, i18n—tinggal centang. Harga & SLA langsung ke-update." />
+            <GlassCard className="p-5 hover:shadow-md transition">
+              <FeatureItem icon={<Puzzle className="h-5 w-5 text-neutral-700" />} title="Add-on Transparan" desc="Branding, payment, deploy, i18n—tinggal centang." />
             </GlassCard>
-            <GlassCard className="p-5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition">
-              <FeatureItem icon={<Lock className="h-5 w-5 text-neutral-700" />} title="Escrow & Milestone" desc="Bayar aman. Dana dirilis bertahap setelah kamu approve tiap milestone." />
+            <GlassCard className="p-5 hover:shadow-md transition">
+              <FeatureItem icon={<Lock className="h-5 w-5 text-neutral-700" />} title="Escrow & Milestone" desc="Bayar aman, dana dirilis bertahap per milestone." />
             </GlassCard>
-            <GlassCard className="p-5 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)] transition">
-              <FeatureItem icon={<FlaskConical className="h-5 w-5 text-neutral-700" />} title="Live Demo & Review" desc="Lihat demo dulu, baca review terverifikasi, cek changelog sebelum beli." />
+            <GlassCard className="p-5 hover:shadow-md transition">
+              <FeatureItem icon={<FlaskConical className="h-5 w-5 text-neutral-700" />} title="Live Demo & Review" desc="Lihat demo dulu, baca review, cek changelog." />
             </GlassCard>
           </div>
         </section>
 
-        {/* ====== TRENDING ====== */}
+        {/* TRENDING */}
         <section className="space-y-6">
           <div className="flex items-end justify-between">
             <h2 className="text-2xl font-semibold tracking-tight">Lagi trending</h2>
             <Link
               href="/products"
-              className="group relative inline-flex items-center justify-center rounded-2xl border border-white/60 bg-white/60 px-4 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]"
+              className="group relative inline-flex items-center justify-center rounded-2xl border border-white/60 bg-white/60 px-4 py-2 text-sm font-medium text-neutral-800 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/70 hover:shadow-md"
             >
               <span className="relative z-10">Lihat semua</span>
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
             </Link>
           </div>
 
+          {/* balik ke 3 kolom di layar besar */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((p) => (
-              <ProductCard key={p.id} p={p} />
-            ))}
-            {/* CTA */}
-            <GlassCard className="hidden p-6 sm:block">
+            {loadingTrending && Array.from({ length: 2 }).map((_, i) => <CardSkeleton key={i} />)}
+
+            {!loadingTrending && trending?.map((p) => <ProductCard key={p.id} p={p} />)}
+
+            {/* CTA jadi kartu ke-3 pas lg supaya grid rapih */}
+            <GlassCard className="hidden lg:block p-6">
               <div className="text-sm text-neutral-700">Butuh kustom lain?</div>
               <div className="mt-2 text-lg font-semibold">Request add-on spesifik</div>
               <p className="mt-2 text-sm text-neutral-600">Kirim kebutuhanmu, seller kami siap bantu.</p>
@@ -152,36 +179,23 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ====== STATS / TRUST ====== */}
-        <GlassCard className="p-6 md:p-8">
-          <div className="grid gap-6 text-center sm:grid-cols-3">
-            <Stat number="4.8/5" label="Rata-rata rating" />
-            <Stat number="100+" label="Template siap pakai" />
-            <Stat number="3–7 hari" label="Rata-rata delivery" />
-          </div>
-        </GlassCard>
-
-        {/* ====== CTA BAWAH ====== */}
+        {/* CTA BAWAH */}
         <GlassCard className="p-8 text-center">
           <h3 className="text-2xl font-semibold tracking-tight">Siap mulai cepat tanpa nyusun dari nol?</h3>
-          <p className="mx-auto mt-3 max-w-2xl text-neutral-700">Pilih template, centang add-on, dan biarkan kami handle sisanya. Kamu fokus ke launching.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-neutral-700">Pilih template, centang add-on, dan biarkan kami handle sisanya.</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2 md:max-w-md mx-auto">
-            {/* Primary (Katalog) */}
             <Link
               href="/products"
-              className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/70 px-5 py-3 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]"
+              className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/70 px-5 py-3 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80"
             >
               <span className="relative z-10">Mulai dari katalog</span>
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
             </Link>
 
-            {/* Secondary (Fitur) */}
             <a
               href="#fitur"
-              className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/50 px-5 py-3 text-sm font-medium text-neutral-700 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/65 hover:shadow-[0_6px_24px_rgba(0,0,0,0.06)]"
+              className="group relative flex items-center justify-center rounded-2xl border border-white/60 bg-white/50 px-5 py-3 text-sm font-medium text-neutral-700 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/65"
             >
               <span className="relative z-10">Lihat fitur</span>
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
             </a>
           </div>
         </GlassCard>
@@ -190,7 +204,7 @@ export default function Home() {
   );
 }
 
-/* ====== helper components (scoped) ====== */
+/* components kecil */
 
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <div className={"rounded-2xl border border-white/50 bg-white/40 backdrop-blur-xl ring-1 ring-black/5 " + className}>{children}</div>;
@@ -212,11 +226,13 @@ function FeatureItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
   );
 }
 
-function Stat({ number, label }: { number: string; label: string }) {
+function CardSkeleton() {
   return (
-    <div className="space-y-1">
-      <div className="text-3xl font-semibold">{number}</div>
-      <div className="text-sm text-neutral-700">{label}</div>
+    <div className="rounded-2xl border border-white/60 bg-white/60 p-4 backdrop-blur-xl ring-1 ring-black/5 animate-pulse">
+      <div className="mb-3 h-40 rounded-xl bg-white/70" />
+      <div className="h-4 w-3/4 rounded bg-white/70" />
+      <div className="mt-2 h-3 w-1/2 rounded bg-white/70" />
+      <div className="mt-3 h-4 w-24 rounded bg-white/70 ml-auto" />
     </div>
   );
 }

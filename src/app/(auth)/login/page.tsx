@@ -11,16 +11,23 @@ export default function LoginPage() {
   const router = useRouter();
   const sp = useSearchParams();
   const next = sp.get("next") ?? "/";
+  const registered = sp.get("registered") === "true";
+  const expired = sp.get("expired") === "true";
+  const registeredEmail = sp.get("email") || "";
+
   const { login, hydrate } = useAuth();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(registeredEmail);
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(registered ? "🎉 Registrasi berhasil! Silakan login dengan akun Anda." : "");
+  const [expiredMsg, setExpiredMsg] = useState(expired ? "⏱️ Sesi Anda telah berakhir. Silakan login kembali." : "");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
+    setExpiredMsg(""); // Clear expired message on new login attempt
 
     // Validasi minimal
     if (!email.includes("@") || pass.length < 4) {
@@ -34,7 +41,30 @@ export default function LoginPage() {
 
     if (result.ok) {
       hydrate();
-      router.replace(next);
+
+      // Check if there's a redirect URL stored
+      let redirectPath = next;
+      if (typeof window !== "undefined") {
+        const storedRedirect = localStorage.getItem("devstore_redirect_after_login");
+        if (storedRedirect && storedRedirect !== "/login" && storedRedirect !== "/register") {
+          redirectPath = storedRedirect;
+          localStorage.removeItem("devstore_redirect_after_login");
+        }
+      }
+
+      // Redirect based on user role if no specific redirect
+      const user = result.user;
+      if (redirectPath === "/") {
+        if (user?.role === "admin") {
+          redirectPath = "/admin";
+        } else if (user?.role === "seller") {
+          redirectPath = "/seller";
+        } else {
+          redirectPath = "/products";
+        }
+      }
+
+      router.replace(redirectPath);
     } else {
       setErr(result.message || "Login gagal. Silakan coba lagi.");
     }
@@ -43,6 +73,18 @@ export default function LoginPage() {
   return (
     <AuthShell title="Masuk ke DevStore" subtitle="Akses katalog, add-on, dan milestone dengan aman.">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {successMsg && <div className="rounded-lg bg-green-50 border border-green-200 p-3 text-sm text-green-800">{successMsg}</div>}
+        {expiredMsg && (
+          <div className="rounded-lg bg-orange-50 border border-orange-200 p-3 text-sm text-orange-800">
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {expiredMsg}
+            </div>
+          </div>
+        )}
+
         <Field label="Email">
           <input
             type="email"

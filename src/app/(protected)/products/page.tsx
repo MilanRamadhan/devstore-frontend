@@ -30,7 +30,6 @@ export default function ProductsPage() {
       if (result.ok && result.products) {
         setProducts(result.products);
       } else {
-        // Fallback to mock data if backend fails
         setProducts(PRODUCTS);
       }
     };
@@ -74,13 +73,13 @@ export default function ProductsPage() {
 
     switch (sort) {
       case "price-asc":
-        rows.sort((a, b) => a.basePrice - b.basePrice);
+        rows.sort((a, b) => (a.base_price || a.basePrice || 0) - (b.base_price || b.basePrice || 0));
         break;
       case "price-desc":
-        rows.sort((a, b) => b.basePrice - a.basePrice);
+        rows.sort((a, b) => (b.base_price || b.basePrice || 0) - (a.base_price || a.basePrice || 0));
         break;
       case "rating-desc":
-        rows.sort((a, b) => (b.ratingAvg ?? 0) - (a.ratingAvg ?? 0));
+        rows.sort((a, b) => (b.rating_avg ?? b.ratingAvg ?? 0) - (a.rating_avg ?? a.ratingAvg ?? 0));
         break;
       default:
         break;
@@ -99,7 +98,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 isolate">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="text-2xl font-semibold tracking-tight">Katalog</h2>
@@ -117,7 +116,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Filter bar */}
-      <GlassCard className="w-full p-3 md:p-4">
+      <GlassCard className="relative z-40 overflow-visible w-full p-3 md:p-4">
         <div className="grid gap-3 md:grid-cols-3">
           {/* Search */}
           <div className="md:col-span-2">
@@ -172,7 +171,7 @@ export default function ProductsPage() {
           <p className="text-sm text-neutral-600">Memuat produk...</p>
         </GlassCard>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 z-0">
           {filtered.map((p) => (
             <ProductCard key={p.id} p={p} />
           ))}
@@ -218,7 +217,7 @@ function Chip({ active, children, onClick }: { active?: boolean; children: React
   );
 }
 
-/* ===== Custom Glass Dropdown (hover minimalis, tanpa biru) ===== */
+/* ===== Custom Glass Dropdown ===== */
 function Select({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -226,7 +225,6 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
 
   const selected = options.find((o) => o.value === value) ?? options[0];
 
-  // klik di luar untuk tutup
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       if (!btnRef.current || !listRef.current) return;
@@ -239,8 +237,8 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
   }, []);
 
   return (
-    <div className="relative">
-      {/* tombol utama */}
+    // ✅ jadikan dropdown paling depan
+    <div className="relative z-50">
       <button
         ref={btnRef}
         type="button"
@@ -254,12 +252,11 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {/* daftar opsi */}
       {open && (
         <ul
           ref={listRef}
           role="listbox"
-          className="absolute z-40 mt-2 w-full overflow-hidden rounded-2xl border border-white/60 bg-white/80 backdrop-blur-2xl ring-1 ring-black/5
+          className="absolute z-[60] mt-2 w-full overflow-hidden rounded-2xl border border-white/60 bg-white/80 backdrop-blur-2xl ring-1 ring-black/5
                      shadow-[0_12px_40px_rgba(0,0,0,0.08)] animate-fadeIn"
         >
           {options.map((o) => {

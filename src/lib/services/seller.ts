@@ -20,20 +20,17 @@ export type UpdateProductRequest = {
   published?: boolean;
 };
 
+// ✅ INSTANT DELIVERY: Removed ETA/SLA fields
 export type CreateAddonRequest = {
   name: string;
   price: number;
   description?: string;
-  eta_days?: number;
-  sla_days?: number;
 };
 
 export type UpdateAddonRequest = {
   name?: string;
   price?: number;
   description?: string;
-  eta_days?: number;
-  sla_days?: number;
   position?: number;
 };
 
@@ -43,8 +40,6 @@ export type Addon = {
   name: string;
   price: number;
   description?: string;
-  eta_days: number;
-  sla_days?: number;
   position: number;
   created_at: string;
 };
@@ -92,7 +87,7 @@ export const sellerService = {
   },
 
   async getProductById(productId: string) {
-    const response = await api.get<Product>(`/products/${productId}`, true);
+    const response = await api.get<Product>(`/products/mine/${productId}`, true);
 
     if (response.ok && response.data) {
       return { ok: true, product: response.data };

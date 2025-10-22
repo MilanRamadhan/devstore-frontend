@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/store/auth";
+import { CartSync } from "@/components/cart-sync";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 
@@ -38,6 +39,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   // penting: wrapper flex-col biar sticky/top-0 di navbar behave enak
   return (
     <div className="min-h-dvh flex flex-col">
+      <CartSync /> {/* ✅ Sync cart with current user */}
       <Navbar />
       <main className="w-full flex-1 mx-auto max-w-7xl px-4 py-8">{children}</main>
       <Footer />

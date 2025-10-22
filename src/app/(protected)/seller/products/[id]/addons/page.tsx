@@ -15,12 +15,11 @@ export default function ManageAddonsPage({ params }: { params: Promise<{ id: str
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // ✅ INSTANT DELIVERY: Removed eta_days & sla_days
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     description: "",
-    eta_days: "7",
-    sla_days: "14",
   });
 
   useEffect(() => {
@@ -44,8 +43,6 @@ export default function ManageAddonsPage({ params }: { params: Promise<{ id: str
       name: "",
       price: "",
       description: "",
-      eta_days: "7",
-      sla_days: "14",
     });
     setEditingId(null);
     setShowForm(false);
@@ -56,8 +53,6 @@ export default function ManageAddonsPage({ params }: { params: Promise<{ id: str
       name: addon.name,
       price: String(addon.price),
       description: addon.description || "",
-      eta_days: String(addon.eta_days),
-      sla_days: String(addon.sla_days || 14),
     });
     setEditingId(addon.id);
     setShowForm(true);
@@ -67,12 +62,11 @@ export default function ManageAddonsPage({ params }: { params: Promise<{ id: str
     e.preventDefault();
     setError("");
 
+    // ✅ INSTANT DELIVERY: No eta_days or sla_days
     const payload = {
       name: formData.name,
       price: parseFloat(formData.price),
       description: formData.description,
-      eta_days: parseInt(formData.eta_days),
-      sla_days: parseInt(formData.sla_days),
     };
 
     const result = editingId ? await sellerService.updateAddon(productId, editingId, payload) : await sellerService.createAddon(productId, payload);
@@ -155,16 +149,7 @@ export default function ManageAddonsPage({ params }: { params: Promise<{ id: str
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700">ETA (hari)</label>
-                <input
-                  type="number"
-                  value={formData.eta_days}
-                  onChange={(e) => setFormData({ ...formData, eta_days: e.target.value })}
-                  min="0"
-                  className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
-                />
-              </div>
+              {/* ✅ INSTANT DELIVERY: Removed ETA input field */}
             </div>
 
             <div>
@@ -173,6 +158,7 @@ export default function ManageAddonsPage({ params }: { params: Promise<{ id: str
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
+                placeholder="Optional: Jelaskan detail fitur tambahan ini..."
                 className="mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 outline-none focus:border-blue-500"
               />
             </div>
@@ -203,10 +189,9 @@ export default function ManageAddonsPage({ params }: { params: Promise<{ id: str
                   {addon.description && <p className="mt-1 text-sm text-neutral-600">{addon.description}</p>}
                   <div className="mt-3 flex items-center gap-4 text-sm text-neutral-600">
                     <span className="font-semibold text-blue-600">Rp {addon.price.toLocaleString("id-ID")}</span>
-                    <span>ETA: {addon.eta_days} hari</span>
+                    {/* ✅ INSTANT DELIVERY: Removed ETA display */}
                   </div>
-                </div>
-
+                </div>{" "}
                 <div className="ml-4 flex gap-2">
                   <button onClick={() => handleEdit(addon)} className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-50">
                     Edit

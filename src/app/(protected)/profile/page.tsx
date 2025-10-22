@@ -555,80 +555,114 @@ export default function ProfilePage() {
 
       {/* Modal: Jadi Seller */}
       {showBecomeSellerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <GlassCard className="w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/60 ring-1 ring-black/5">
-                  <Store className="h-5 w-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          {/* overlay */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !becomingSellerLoading && setShowBecomeSellerModal(false)} />
+
+          {/* modal card */}
+          <div className="relative w-full max-w-lg animate-in fade-in zoom-in duration-200">
+            <div className="relative rounded-2xl border border-white/60 bg-white/70 p-6 backdrop-blur-xl ring-1 ring-black/5 shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
+              {/* inner ring accent */}
+              <div className="pointer-events-none absolute inset-0 rounded-[16px] ring-1 ring-black/5" />
+
+              {/* header */}
+              <div className="mb-4 flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/60 bg-white/70 ring-1 ring-black/5">
+                    <Store className="h-5 w-5 text-neutral-900" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold tracking-tight">Jadi Seller</h2>
+                    <p className="text-sm text-neutral-600">Isi informasi toko dan pembayaran kamu</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold">Jadi Seller</h2>
-                  <p className="text-sm text-neutral-600">Isi informasi toko dan pembayaran kamu</p>
-                </div>
+
+                <button onClick={() => setShowBecomeSellerModal(false)} disabled={becomingSellerLoading} className="rounded-xl p-2 text-neutral-700 hover:bg-white/75 transition disabled:opacity-50" aria-label="Tutup">
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <button onClick={() => setShowBecomeSellerModal(false)} disabled={becomingSellerLoading} className="rounded-xl p-2 hover:bg-white/70 transition">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
 
-            <div className="space-y-4">
-              <Field label="Nama Toko *">
-                <Input value={sellerFormData.store_name} onChange={(e) => setSellerFormData({ ...sellerFormData, store_name: e.target.value })} placeholder="Contoh: DevStore Official" disabled={becomingSellerLoading} />
-                <p className="mt-1 text-xs text-neutral-500">Nama toko yang akan ditampilkan di produk kamu</p>
-              </Field>
+              {/* body */}
+              <div className="space-y-4">
+                <Field label="Nama Toko *">
+                  <Input
+                    value={sellerFormData.store_name}
+                    onChange={(e) => setSellerFormData({ ...sellerFormData, store_name: e.target.value })}
+                    placeholder="Contoh: DevStore Official"
+                    disabled={becomingSellerLoading}
+                    className="rounded-xl border border-white/60 bg-white/70 ring-1 ring-black/5 focus:bg-white/90"
+                  />
+                  <p className="mt-1 text-xs text-neutral-500">Nama toko yang akan ditampilkan di produk kamu</p>
+                </Field>
 
-              <Field label="Bank Pembayaran *">
-                <Input value={sellerFormData.payout_bank} onChange={(e) => setSellerFormData({ ...sellerFormData, payout_bank: e.target.value })} placeholder="Contoh: BCA, Mandiri, BNI" disabled={becomingSellerLoading} />
-              </Field>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Bank Pembayaran *">
+                    <Input
+                      value={sellerFormData.payout_bank}
+                      onChange={(e) => setSellerFormData({ ...sellerFormData, payout_bank: e.target.value })}
+                      placeholder="Contoh: BCA, Mandiri, BNI"
+                      disabled={becomingSellerLoading}
+                      className="rounded-xl border border-white/60 bg-white/70 ring-1 ring-black/5 focus:bg-white/90"
+                    />
+                  </Field>
 
-              <Field label="Nomor Rekening *">
-                <Input value={sellerFormData.payout_account} onChange={(e) => setSellerFormData({ ...sellerFormData, payout_account: e.target.value })} placeholder="1234567890" disabled={becomingSellerLoading} />
-              </Field>
+                  <Field label="Nomor Rekening *">
+                    <Input
+                      value={sellerFormData.payout_account}
+                      onChange={(e) => setSellerFormData({ ...sellerFormData, payout_account: e.target.value })}
+                      placeholder="1234567890"
+                      disabled={becomingSellerLoading}
+                      className="rounded-xl border border-white/60 bg-white/70 ring-1 ring-black/5 focus:bg-white/90"
+                    />
+                  </Field>
+                </div>
 
-              <Field label="Bio Toko (opsional)">
-                <Textarea
-                  rows={3}
-                  value={sellerFormData.bio}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v.length <= 200) setSellerFormData({ ...sellerFormData, bio: v });
-                  }}
-                  placeholder="Cerita singkat tentang toko kamu..."
+                <Field label="Bio Toko (opsional)">
+                  <Textarea
+                    rows={3}
+                    value={sellerFormData.bio}
+                    onChange={(e) => {
+                      const v = e.target.value ?? "";
+                      if (v.length <= 200) setSellerFormData({ ...sellerFormData, bio: v });
+                    }}
+                    placeholder="Cerita singkat tentang toko kamu..."
+                    disabled={becomingSellerLoading}
+                    className="resize-none rounded-xl border border-white/60 bg-white/70 ring-1 ring-black/5 focus:bg-white/90"
+                  />
+                  <div className="mt-1 text-right text-xs text-neutral-500">{sellerFormData.bio?.length ?? 0}/200</div>
+                </Field>
+              </div>
+
+              {/* footer */}
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setShowBecomeSellerModal(false)}
                   disabled={becomingSellerLoading}
-                />
-                <div className="mt-1 text-xs text-neutral-500 text-right">{sellerFormData.bio.length}/200</div>
-              </Field>
-            </div>
+                  className="group relative inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="relative z-10">Batal</span>
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+                </button>
 
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setShowBecomeSellerModal(false)}
-                disabled={becomingSellerLoading}
-                className="flex-1 group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-white/70 px-4 py-2.5 text-sm font-medium text-neutral-900 backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="relative z-10">Batal</span>
-                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
-              </button>
-              <button
-                onClick={handleBecomeSeller}
-                disabled={becomingSellerLoading || !sellerFormData.store_name.trim() || !sellerFormData.payout_bank.trim() || !sellerFormData.payout_account.trim()}
-                className="flex-1 group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  {becomingSellerLoading ? (
-                    <>Memproses...</>
-                  ) : (
-                    <>
-                      <Check className="h-4 w-4" />
-                      Daftar Sekarang
-                    </>
-                  )}
-                </span>
-                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
-              </button>
+                <button
+                  onClick={handleBecomeSeller}
+                  disabled={becomingSellerLoading || !sellerFormData.store_name.trim() || !sellerFormData.payout_bank.trim() || !sellerFormData.payout_account.trim()}
+                  className="group relative inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/60 bg-black/90 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-xl ring-1 ring-black/5 transition hover:bg-black hover:shadow-[0_6px_24px_rgba(0,0,0,0.15)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="relative z-10 inline-flex items-center gap-2">
+                    {becomingSellerLoading ? (
+                      "Memproses…"
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" /> Daftar Sekarang
+                      </>
+                    )}
+                  </span>
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
+                </button>
+              </div>
             </div>
-          </GlassCard>
+          </div>
         </div>
       )}
     </div>

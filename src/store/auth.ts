@@ -36,6 +36,20 @@ function persistUser(u: User | null) {
   }
 }
 
+/** ✅ Sync cart dengan user saat ini */
+function syncCartWithUser(userId: string | null) {
+  if (typeof window === "undefined") return;
+
+  try {
+    // Dynamically import to avoid circular dependency
+    import("@/store/cart").then((mod) => {
+      mod.useCart.getState().syncUser(userId);
+    });
+  } catch (e) {
+    console.warn("Failed to sync cart with user:", e);
+  }
+}
+
 /**
  * Ambil profil lengkap dari backend dan merge ke state.user
  * Mengandalkan authService.me() (harusnya sudah include token).
@@ -43,23 +57,54 @@ function persistUser(u: User | null) {
  */
 async function mergeProfileIntoState(set: (p: Partial<AuthState>) => void, get: () => AuthState) {
   try {
-    // @ts-ignore — kasih fleksibilitas kalau authService.me belum diketik
-    const resp = authService.me ? await authService.me() : null;
+    // Check if authService.me exists
+    if (typeof authService.me !== "function") {
+      console.warn("authService.me() not available");
+      return;
+    }
+
+    const resp = await authService.me();
+    console.log("🔐 Auth Service: mergeProfile response", resp);
+
     // Ekspektasi shape: { ok: true, data: { id, email, display_name, role, store_name, ... } }
     if (resp && resp.ok && resp.data) {
+      const profileData = resp.data as any; // Backend bisa return berbagai format
+      console.log("📦 Raw profile data:", profileData);
+
+      // Handle berbagai format response:
+      // 1. Direct: { id, email, display_name, ... }
+      // 2. Wrapped profile: { profile: { id, email, ... } }
+      // 3. Wrapped user: { user: { id, email, ... } }
+      const actualProfile = profileData.user || profileData.profile || profileData;
+      console.log("📦 Actual profile after unwrap:", actualProfile);
+
+      // Ensure we have minimum required data
+      if (!actualProfile.id && !actualProfile.email) {
+        console.warn("⚠️ Invalid profile data from backend", actualProfile);
+        return;
+      }
+
       const cur = get().user;
+
+      // Backend bisa return display_name atau name
+      const displayName = actualProfile.display_name || actualProfile.name;
+      const fallbackName = actualProfile.email?.split("@")[0] || "User";
+
       const merged: User = {
-        id: cur?.id ?? resp.data.id,
-        email: cur?.email ?? resp.data.email,
-        name: cur?.name ?? resp.data.display_name ?? resp.data.name ?? (resp.data.email?.split("@")[0] || "User"),
-        role: resp.data.role ?? cur?.role ?? "buyer",
-        store_name: resp.data.store_name ?? cur?.store_name ?? null,
+        id: actualProfile.id || cur?.id || "",
+        email: actualProfile.email || cur?.email || "",
+        name: displayName || cur?.name || fallbackName,
+        role: actualProfile.role || cur?.role || "buyer",
+        store_name: actualProfile.store_name || cur?.store_name || null,
       };
+
+      console.log("✅ Merged profile:", merged);
       set({ user: merged });
       persistUser(merged);
     }
-  } catch {
-    // diam aja; profil opsional
+  } catch (error) {
+    // Silently handle errors - profil opsional
+    console.debug("⚠️ mergeProfileIntoState error:", error);
   }
 }
 
@@ -91,25 +136,44 @@ export const useAuth = create<AuthState>((set, get) => ({
   setUser: (u: User) => {
     persistUser(u);
     set({ user: u });
+    syncCartWithUser(u.id); // ✅ Sync cart when user is set
   },
 
   login: async (email: string, password: string) => {
     set({ isLoading: true });
     try {
+      console.log("🔐 Auth Service: Login attempt", { email });
       const result = await authService.login({ email, password });
+      console.log("🔐 Auth Service: Login response", result);
+
       // ekspektasi: result = { ok, user?, message? } dan token sudah disimpan oleh authService
       if (result.ok && (result as any).user) {
-        const u = (result as any).user as User;
+        const userData = (result as any).user;
+
+        // Map dari backend format ke User format
+        const u: User = {
+          id: userData.id,
+          email: userData.email,
+          name: userData.name || userData.display_name || userData.email?.split("@")[0] || "User",
+          role: userData.role || "buyer",
+          store_name: userData.store_name || null,
+        };
+
+        console.log("✅ Login success, user:", u);
         persistUser(u);
         set({ user: u });
+
         // merge profil (role/store_name) setelah login
         await mergeProfileIntoState(set, get);
         set({ isLoading: false });
         return { ok: true, user: get().user! };
       }
+
+      console.warn("⚠️ Login failed:", (result as any).message);
       set({ isLoading: false });
       return { ok: false, message: (result as any).message || "Login gagal" };
-    } catch {
+    } catch (error) {
+      console.error("❌ Login error:", error);
       set({ isLoading: false });
       return { ok: false, message: "Terjadi kesalahan saat login" };
     }
@@ -118,23 +182,31 @@ export const useAuth = create<AuthState>((set, get) => ({
   register: async (email: string, password: string, name?: string) => {
     set({ isLoading: true });
     try {
+      console.log("🔐 Auth Service: Register attempt", { email, name });
       const result = await authService.register({
         email,
         password,
         displayName: name || email.split("@")[0],
       });
-      if (result.ok && (result as any).user) {
-        const u = (result as any).user as User;
-        persistUser(u);
-        set({ user: u });
-        // merge profil (role/store_name) setelah register
-        await mergeProfileIntoState(set, get);
+
+      console.log("🔐 Auth Service: Register response", result);
+
+      // ✅ Register berhasil - TIDAK set user, TIDAK login otomatis
+      // Backend tidak return token, jadi user harus login manual
+      if (result.ok) {
+        console.log("✅ Register success - user must login");
         set({ isLoading: false });
-        return { ok: true, user: get().user! };
+        return {
+          ok: true,
+          message: "Registrasi berhasil! Silakan login dengan akun Anda.",
+        } as any;
       }
+
+      console.warn("⚠️ Register failed:", (result as any).message);
       set({ isLoading: false });
       return { ok: false, message: (result as any).message || "Registrasi gagal" };
-    } catch {
+    } catch (error) {
+      console.error("❌ Register error:", error);
       set({ isLoading: false });
       return { ok: false, message: "Terjadi kesalahan saat registrasi" };
     }
@@ -146,7 +218,22 @@ export const useAuth = create<AuthState>((set, get) => ({
     } catch {
       // noop
     }
+
+    // Clear all auth-related data
     persistUser(null);
+
+    // Clear token
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("devstore_token");
+      localStorage.removeItem("devstore_redirect_after_login");
+    }
+
     set({ user: null });
+    syncCartWithUser(null); // ✅ Clear cart on logout
+
+    // Redirect to login
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
   },
 }));

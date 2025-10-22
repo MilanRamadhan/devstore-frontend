@@ -40,17 +40,15 @@ export const productService = {
     if (response.ok && response.data) {
       const rawProducts = response.data.products || response.data;
 
-      // Normalize each product
+      // ✅ INSTANT DELIVERY: Remove SLA fields mapping
       const products = (Array.isArray(rawProducts) ? rawProducts : []).map((p: any) => ({
         ...p,
         basePrice: p.base_price ?? p.basePrice ?? 0,
-        baseSlaDays: p.base_sla_days ?? p.baseSlaDays ?? 7,
         addOns: (p.addons || p.product_addons || p.addOns || []).map((addon: any) => ({
           id: addon.id,
           name: addon.name,
           description: addon.description,
           price: addon.price ?? 0,
-          extraSlaDays: addon.extra_sla_days ?? addon.extraSlaDays ?? 0,
         })),
       }));
 
@@ -66,17 +64,15 @@ export const productService = {
     if (response.ok && response.data) {
       const rawProduct = response.data.product || response.data;
 
-      // Normalize backend fields to frontend format
+      // ✅ INSTANT DELIVERY: Remove SLA fields mapping
       const product = {
         ...rawProduct,
         basePrice: (rawProduct as any).base_price ?? rawProduct.basePrice ?? 0,
-        baseSlaDays: (rawProduct as any).base_sla_days ?? rawProduct.baseSlaDays ?? 7,
         addOns: ((rawProduct as any).addons || (rawProduct as any).product_addons || rawProduct.addOns || []).map((addon: any) => ({
           id: addon.id,
           name: addon.name,
           description: addon.description,
           price: addon.price ?? 0,
-          extraSlaDays: addon.extra_sla_days ?? addon.extraSlaDays ?? 0,
         })),
       };
 

@@ -34,8 +34,8 @@ export default function RegisterPage() {
     setIsLoading(false);
 
     if (result.ok) {
-      hydrate();
-      router.replace(next);
+      // ✅ Registrasi berhasil - redirect ke login
+      router.push(`/login?registered=true&email=${encodeURIComponent(email)}`);
     } else {
       setErr(result.message || "Registrasi gagal. Silakan coba lagi.");
     }

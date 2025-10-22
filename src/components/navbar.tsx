@@ -7,10 +7,16 @@ import { useCart } from "@/store/cart";
 import { useAuth } from "@/store/auth";
 import { ShoppingCart, Menu, X, LogOut, User2 } from "lucide-react";
 
-const NAV = [
+// Nav items generator (based on user role)
+const getNavItems = (userRole: string | undefined) => [
   { href: "/products", label: "Katalog" },
-  { href: "/orders", label: "Orders" },
-  { href: "/seller", label: "Seller", sellerOnly: true },
+  // Dynamic orders link based on role
+  {
+    href: userRole === "seller" || userRole === "admin" ? "/seller/orders" : "/orders",
+    label: "Orders",
+  },
+  { href: "/seller", label: "Seller Dashboard", sellerOnly: true },
+  { href: "/admin", label: "Admin", adminOnly: true },
 ];
 
 export default function Navbar() {
@@ -23,6 +29,9 @@ export default function Navbar() {
 
   // auth
   const { user, logout } = useAuth();
+
+  // Dynamic nav items based on role
+  const navItems = useMemo(() => getNavItems(user?.role), [user?.role]);
 
   // inisial avatar (fallback)
   const initials = useMemo(() => {
@@ -45,18 +54,24 @@ export default function Navbar() {
 
           {/* Desktop */}
           <nav className="hidden md:flex items-center gap-2">
-            {NAV.filter((n) => !n.sellerOnly || user?.role === "seller").map((n) => {
-              const active = pathname === n.href || pathname?.startsWith(n.href + "/");
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className={["px-3 py-1.5 rounded-full text-sm transition duration-300", active ? "bg-black/90 text-white ring-1 ring-black/5" : "text-neutral-700 hover:bg-black/90 hover:text-white/90"].join(" ")}
-                >
-                  {n.label}
-                </Link>
-              );
-            })}
+            {navItems
+              .filter((n) => {
+                if (n.sellerOnly) return user?.role === "seller" || user?.role === "admin";
+                if (n.adminOnly) return user?.role === "admin";
+                return true;
+              })
+              .map((n) => {
+                const active = pathname === n.href || pathname?.startsWith(n.href + "/");
+                return (
+                  <Link
+                    key={n.href}
+                    href={n.href}
+                    className={["px-3 py-1.5 rounded-full text-sm transition duration-300", active ? "bg-black/90 text-white ring-1 ring-black/5" : "text-neutral-700 hover:bg-black/90 hover:text-white/90"].join(" ")}
+                  >
+                    {n.label}
+                  </Link>
+                );
+              })}
 
             {/* Cart */}
             {(() => {
@@ -119,19 +134,25 @@ export default function Navbar() {
         {open && (
           <div className="md:hidden pb-3">
             <div className="mt-2 rounded-2xl border border-white/60 bg-white/60 p-2 backdrop-blur-xl ring-1 ring-black/5">
-              {NAV.filter((n) => !n.sellerOnly || user?.role === "seller").map((n) => {
-                const active = pathname === n.href || pathname?.startsWith(n.href + "/");
-                return (
-                  <Link
-                    key={n.href}
-                    href={n.href}
-                    className={["block rounded-xl px-3 py-2 text-sm transition", active ? "bg-white/80 text-neutral-900 ring-1 ring-black/5" : "text-neutral-700 hover:bg-white/70"].join(" ")}
-                    onClick={() => setOpen(false)}
-                  >
-                    {n.label}
-                  </Link>
-                );
-              })}
+              {navItems
+                .filter((n) => {
+                  if (n.sellerOnly) return user?.role === "seller" || user?.role === "admin";
+                  if (n.adminOnly) return user?.role === "admin";
+                  return true;
+                })
+                .map((n) => {
+                  const active = pathname === n.href || pathname?.startsWith(n.href + "/");
+                  return (
+                    <Link
+                      key={n.href}
+                      href={n.href}
+                      className={["block rounded-xl px-3 py-2 text-sm transition", active ? "bg-white/80 text-neutral-900 ring-1 ring-black/5" : "text-neutral-700 hover:bg-white/70"].join(" ")}
+                      onClick={() => setOpen(false)}
+                    >
+                      {n.label}
+                    </Link>
+                  );
+                })}
 
               {/* Cart (mobile) */}
               <Link href="/cart" className="mt-1 flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-neutral-700 hover:bg-white/70" onClick={() => setOpen(false)}>
