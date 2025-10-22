@@ -54,7 +54,8 @@ export function UploadDeliverableModal({ isOpen, onClose, orderItemId, orderId, 
       formData.append("file", file);
       formData.append("note", note);
 
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/items/${orderItemId}/deliverable`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/orders/${orderId}/items/${orderItemId}/deliverable`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -3,11 +3,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useAuth } from "@/store/auth";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const sp = useSearchParams();
   const next = sp.get("next") ?? "/";
@@ -113,6 +113,22 @@ function AuthShell({ title, subtitle, children }: { title: string; subtitle?: st
         </div>
       </main>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthShell title="Daftar ke DevStore" subtitle="Mulai jual atau beli template & source code berkualitas.">
+          <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+          </div>
+        </AuthShell>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }
 

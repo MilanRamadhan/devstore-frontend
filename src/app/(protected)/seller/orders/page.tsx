@@ -52,7 +52,8 @@ export default function SellerOrdersPage() {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/orders/seller/items", {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/orders/seller/items`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -197,7 +198,8 @@ function OrderItemCard({ item, onUpdate }: { item: OrderItem; onUpdate: () => vo
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/orders/${item.order_id}/items/${item.id}/start`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const response = await fetch(`${API_URL}/orders/${item.order_id}/items/${item.id}/start`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

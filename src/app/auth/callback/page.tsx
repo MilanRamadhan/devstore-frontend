@@ -1,7 +1,7 @@
 // src/app/auth/callback/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/store/auth";
 import { createClient } from "@supabase/supabase-js";
@@ -13,7 +13,7 @@ const supabase = createClient(
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhaHB4a3F4cWZhc3pzY2diYXVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNDE1ODcsImV4cCI6MjA3NjYxNzU4N30.Ddz981dlT6ndsUUNVF6SeYDBVyG_A-mg5dc9q9H2ot8"
 );
 
-export default function AuthCallbackPage() {
+function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser, hydrate } = useAuth();
@@ -47,7 +47,8 @@ export default function AuthCallbackPage() {
 
           // Sync profile to backend
           try {
-            await fetch("http://localhost:5000/api/profile", {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+            await fetch(`${API_URL}/profile`, {
               method: "PUT",
               headers: {
                 "Content-Type": "application/json",
@@ -104,5 +105,22 @@ export default function AuthCallbackPage() {
         <p className="text-neutral-600">Mohon tunggu sebentar...</p>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md w-full text-center">
+            <div className="h-16 w-16 mx-auto mb-4 animate-spin rounded-full border-4 border-neutral-200 border-t-blue-600" />
+            <h1 className="text-2xl font-semibold text-neutral-800 mb-2">Loading...</h1>
+          </div>
+        </div>
+      }
+    >
+      <CallbackHandler />
+    </Suspense>
   );
 }

@@ -14,8 +14,15 @@ export default function CartPage() {
     return { total: total * l.quantity };
   });
 
-  const baseEta = Math.max(0, ...lines.map((l) => l.product.baseSlaDays ?? 0));
-  const preview = checkoutPreview(lineTotals, baseEta);
+  // Calculate ETA: instant = 0 days, custom = custom_eta_days
+  const estimatedDays = Math.max(
+    0,
+    ...lines.map((l) => {
+      if (l.product.delivery === "instant") return 0;
+      return l.product.custom_eta_days ?? 7; // Default 7 days for custom
+    })
+  );
+  const preview = checkoutPreview(lineTotals);
 
   // EMPTY STATE — tampilkan glass card manis kalau cart kosong
   if (lines.length === 0) {
@@ -61,7 +68,7 @@ export default function CartPage() {
               <h2 className="text-xl font-semibold">Cart</h2>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 text-xs text-neutral-700 ring-1 ring-black/5">
                 <Clock className="h-3.5 w-3.5" />
-                Estimasi: {preview.etaDays} hari
+                Estimasi: {estimatedDays} hari
               </div>
             </div>
 
